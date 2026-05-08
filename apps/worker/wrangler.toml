@@ -1,0 +1,24 @@
+name = "yoursign-worker"
+main = "src/index.ts"
+account_id = "450e01c6b878357ff7bccd2d4b23123e"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[vars]
+SOLANA_CLUSTER = "devnet"
+SOLANA_RPC_URL = "https://api.devnet.solana.com"
+PROGRAM_ID = "35RbwNgx9Em28mMLZ6iWzjCnaTd4tD2NWuxrHqR76M8X"
+
+# Queue consumer wiring is added Sprint 2 Tuesday after we finalize job names.
+# [[queues.consumers]]
+# queue = "anchor-document"
+# max_batch_size = 1
+# max_retries = 6
+
+[env.production]
+name = "yoursign-worker-prod"
+[env.production.vars]
+SOLANA_CLUSTER = "mainnet-beta"
+SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+PROGRAM_ID = "REPLACE_WITH_MAINNET_PROGRAM_ID"
