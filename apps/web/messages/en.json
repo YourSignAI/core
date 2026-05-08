@@ -122,7 +122,7 @@
     "eyebrow": "Step 1 · Anchor hash on-chain",
     "cluster": "Solana devnet",
     "h1": "Register PDF on-chain",
-    "subtitle": "Connect your Solana wallet and sign the transaction. The SHA-256 hash gets anchored on-chain via the {instruction} instruction.",
+    "subtitle": "Connect your Solana wallet and sign the transaction. The SHA-256 hash gets anchored on-chain via the <instruction>register_document</instruction> instruction.",
     "footer": {
       "left": "© 2026 YourSign Labs · Apache-2.0",
       "right": "spec AC-1.2.2 · ADR-0002"
