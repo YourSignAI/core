@@ -1,0 +1,66 @@
+version: 1
+
+# Model + tool selection per role.
+# Override per-invocation via the orchestrator prompt.
+
+defaults:
+  temperature: 0.2
+  max_retries: 3
+  log_dir: harness/runs
+
+roles:
+  orchestrator:
+    model: claude-opus-4-7
+    tools: [Skill, Task, Bash, Read, Grep, Glob]
+
+  researcher:
+    model: claude-sonnet-4-6
+    tools: [WebSearch, WebFetch, Read, Grep]
+
+  planner:
+    model: claude-opus-4-7
+    tools: [Read, Grep, Write]
+    inputs: [docs/01-spec.md, docs/04-roadmap.md]
+
+  executor:
+    primary: claude-sonnet-4-6
+    fallback: claude-opus-4-7
+    tools: [Read, Edit, Write, Bash, Glob, Grep]
+
+  verifier:
+    # ALWAYS a different family than executor — diversity matters.
+    primary: gemini-2.5-pro      # via mcp__gemini__gemini
+    fallback: gpt-5.3-codex      # via mcp__codex__codex
+    tools: [Read, Grep, Bash]
+    sandbox: read-only
+
+  architect:
+    model: claude-opus-4-7
+    tools: [Read, Write, Grep]
+    output_format: ADR
+
+  security_analyst:
+    # MANDATORY for any change touching:
+    #   - packages/crypto
+    #   - programs/yoursign
+    #   - apps/api/auth/*
+    #   - apps/api/routes/payments/*
+    primary: gemini-2.5-pro
+    fallback: claude-opus-4-7
+    tools: [Read, Grep, Bash]
+    sandbox: read-only
+
+verifier_gates:
+  spec_citation: required        # PR must cite a spec section
+  no_secret_leak: required       # static scan
+  contract_conformance: required # routes match docs/contracts/api.md
+  lineage_block: required_for: [packages/core-domain]   # DocuSeal lineage attestation
+  adr_presence: required_for_changes_in:
+    - packages/crypto
+    - programs/yoursign
+    - apps/api/auth
+    - vercel.ts
+
+cost_budget:
+  per_run_usd: 5.0               # soft cap; orchestrator MUST log when exceeded
+  per_milestone_usd: 50.0
