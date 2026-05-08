@@ -1,0 +1,41 @@
+{
+  "name": "@yoursign/verifier",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Public verifier (verify.yoursign.tech). Read-only. AC-5.1.2 — no YourSign backend in the path.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --turbopack -p 3001",
+    "build": "next build",
+    "start": "next start -p 3001",
+    "deploy": "opennextjs-cloudflare build && wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "next lint",
+    "clean": "rm -rf .next dist .turbo .open-next"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.0",
+    "@yoursign/agent-sdk": "workspace:*",
+    "@yoursign/crypto": "workspace:*",
+    "@yoursign/pdf-engine": "workspace:*",
+    "@yoursign/solana-sdk": "workspace:*",
+    "@yoursign/ui": "workspace:*",
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@opennextjs/cloudflare": "^1.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "postcss": "^8.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^4.86.0"
+  }
+}
