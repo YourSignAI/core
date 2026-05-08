@@ -153,6 +153,8 @@
       "txSignature": "Tx signature",
       "documentId": "document_id:",
       "viewExplorer": "Ver no Solana Explorer →",
+      "openDocument": "Abrir documento →",
+      "share": "Compartilhe:",
       "errors": {
         "noWallet": "Conecte uma carteira primeiro.",
         "submitFailed": "Falha ao submeter transação."

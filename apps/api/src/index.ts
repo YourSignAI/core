@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import type { Env } from './env.js';
 import { authRoutes } from './routes/auth.js';
 import { agentRoutes } from './routes/agents.js';
+import { docRoutes } from './routes/documents.js';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -12,7 +13,14 @@ app.use(
   cors({
     origin: (origin) => origin ?? '*',
     credentials: true,
-    allowHeaders: ['content-type', 'authorization'],
+    allowHeaders: [
+      'content-type',
+      'authorization',
+      'x-filename',
+      'x-canonical-hash',
+      'x-owner-b58',
+    ],
+    exposeHeaders: ['content-disposition'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   }),
 );
@@ -29,5 +37,6 @@ app.get('/healthz', (c) => c.text('ok'));
 
 app.route('/auth', authRoutes);
 app.route('/agents', agentRoutes);
+app.route('/documents', docRoutes);
 
 export default app;

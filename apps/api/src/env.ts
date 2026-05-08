@@ -14,6 +14,7 @@ export type Env = {
 
   // bindings
   SCOPES: R2Bucket;
+  DOCS: R2Bucket;
   SIWS_NONCES: KVNamespace;
   DB: Hyperdrive;
   AI: Ai;

@@ -24,6 +24,12 @@ SCOPE_R2_BUCKET = "yoursign-agent-scopes"
 binding = "SCOPES"
 bucket_name = "yoursign-agent-scopes"
 
+# Demo-only document blob storage. Sprint 2 wires X25519 envelope encryption
+# (AC-3.1.2). Until then PDFs are public for the recipient render flow.
+[[r2_buckets]]
+binding = "DOCS"
+bucket_name = "yoursign-documents"
+
 [[kv_namespaces]]
 binding = "SIWS_NONCES"
 id = "85b5514e64c044ee9df5667167d82f9d"

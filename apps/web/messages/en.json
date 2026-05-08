@@ -153,6 +153,8 @@
       "txSignature": "Tx signature",
       "documentId": "document_id:",
       "viewExplorer": "View on Solana Explorer →",
+      "openDocument": "Open document →",
+      "share": "Share:",
       "errors": {
         "noWallet": "Connect a wallet first.",
         "submitFailed": "Failed to submit transaction."
