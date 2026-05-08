@@ -22,6 +22,7 @@ type StashedFile = {
   byteLength: number;
   hashHex: string;
   ts: number;
+  b64?: string;
 };
 
 type Status =
@@ -141,7 +142,29 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
         { signature, blockhash, lastValidBlockHeight },
         'confirmed',
       );
-      setStatus({ kind: 'done', signature, documentIdHex: bytesToHex(documentId) });
+      const documentIdHex = bytesToHex(documentId);
+
+      // Upload PDF blob (demo, plaintext) so /d/[id] can render for any reader.
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://yoursign-api.videostreaminginc.workers.dev';
+      if (stashed?.b64) {
+        try {
+          const bin = atob(stashed.b64);
+          const bytes = new Uint8Array(bin.length);
+          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+          await fetch(`${apiUrl}/documents/${documentIdHex}`, {
+            method: 'PUT',
+            headers: {
+              'content-type': 'application/pdf',
+              'x-filename': stashed.filename,
+              'x-canonical-hash': hashHex,
+              'x-owner-b58': active.pubkey.toBase58(),
+            },
+            body: bytes,
+          });
+        } catch { /* upload best-effort; tx already on-chain */ }
+      }
+
+      setStatus({ kind: 'done', signature, documentIdHex });
     } catch (e: unknown) {
       setStatus({
         kind: 'error',
@@ -260,15 +283,33 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
                   document_id: <code style={{ color: 'var(--ink)' }}>{status.documentIdHex}</code>
                 </div>
               ) : null}
-              <a
-                href={explorerUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="btn btn-ghost"
-                style={{ marginTop: 12, fontSize: 13 }}
-              >
-                Ver no Solana Explorer →
-              </a>
+              <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
+                <a
+                  href={explorerUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="btn btn-ghost"
+                  style={{ fontSize: 13 }}
+                >
+                  Ver no Solana Explorer →
+                </a>
+                {status.kind === 'done' ? (
+                  <a
+                    href={`/d/${status.documentIdHex}`}
+                    className="btn btn-primary"
+                    style={{ fontSize: 13 }}
+                  >
+                    Abrir documento →
+                  </a>
+                ) : null}
+              </div>
+              {status.kind === 'done' ? (
+                <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ash)' }}>
+                  Compartilhe: <code style={{ color: 'var(--ink)' }}>
+                    {typeof window !== 'undefined' ? `${window.location.origin}/d/${status.documentIdHex}` : `/d/${status.documentIdHex}`}
+                  </code>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </article>
