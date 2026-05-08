@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "title": "YourSign Verifier",
+    "description": "Verify a YourSign signature on-chain. No server in the path."
+  },
+  "nav": {
+    "ariaHome": "Home",
+    "language": "Language",
+    "lightProtocol": "Light Protocol"
+  },
+  "page": {
+    "wordmark": "YourSign · verify",
+    "eyebrow": "Read-only · No backend in the path",
+    "h1": "Verify a YourSign signature on-chain.",
+    "subtitle": "Drop a signed PDF. The canonical hash is recomputed in your browser, and verification queries Solana via a public RPC — without going through our backend (AC-5.1.2).",
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0"
+    }
+  },
+  "form": {
+    "dropHeadline": "Drop a signed PDF here",
+    "dropSubline": "or click to select — the hash is computed in your browser",
+    "computing": "Computing canonical hash…",
+    "errorUnknown": "unknown failure",
+    "result": {
+      "bytes": "{count} bytes",
+      "sha256": "SHA-256",
+      "statusLabel": "Status:",
+      "awaitingChain": "awaiting on-chain query (Sprint 3 Thursday wires Light Protocol read)"
+    }
+  }
+}

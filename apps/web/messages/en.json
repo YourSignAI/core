@@ -1,0 +1,167 @@
+{
+  "metadata": {
+    "title": "YourSign — decentralized signing",
+    "description": "Sign documents with your Solana wallet. On-chain verifiable. No server in the path."
+  },
+  "nav": {
+    "ariaPrincipal": "Main",
+    "ariaHome": "Home",
+    "howItWorks": "How it works",
+    "verify": "Verify",
+    "openSource": "Open source",
+    "delegateAgent": "Delegate agent",
+    "home": "Home",
+    "language": "Language"
+  },
+  "wallet": {
+    "connect": "Connect",
+    "loading": "Loading…",
+    "logout": "Sign out",
+    "copy": {
+      "tooltip": "{network}: {address} (click to copy)",
+      "copied": "✓ copied",
+      "noSolana": "no Solana wallet"
+    }
+  },
+  "home": {
+    "eyebrow": "Cryptographic signature · Zero cost · Agents under control",
+    "poweredBy": "Powered by Solana",
+    "h1Lead": "Upload your contract and sign it",
+    "h1Em": "cryptographically",
+    "h1Tail": "in seconds.",
+    "subtitle": "Solana public key, SHA-256 hash anchored on-chain, no gas fees. And delegate tasks to an AI agent with scope and expiry — all revocable on-chain.",
+    "trust": {
+      "noGas": "Zero gas fees",
+      "immutableHash": "Immutable hash on-chain",
+      "noSignup": "No signup needed",
+      "legalValidity": "Legal validity — MP 2.200-2"
+    },
+    "how": {
+      "heading": "Three steps. No credit card.",
+      "step1": {
+        "num": "01 — UPLOAD",
+        "title": "Drop the PDF, we read it.",
+        "body": "OCR auto-detects where the signature, initials and date should go. Adjust by dragging blocks."
+      },
+      "step2": {
+        "num": "02 — IDENTITY",
+        "title": "Connect a wallet or sign in with email.",
+        "body": "Phantom, Backpack, Solflare — or social login that creates an invisible wallet. You never have to see a seed phrase."
+      },
+      "step3": {
+        "num": "03 — SIGNATURE",
+        "title": "Approve an off-chain message.",
+        "body": "YourSign generates a SHA-256 hash of the content, you sign it with your Solana key, and the proof is anchored immutably on-chain via Light Protocol."
+      }
+    },
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0",
+      "right": "Legal validity · Public audit · ICP-Brasil optional"
+    }
+  },
+  "dropzone": {
+    "errors": {
+      "onlyPdf": "PDFs only.",
+      "tooLarge": "PDF larger than 25 MB.",
+      "processFailed": "Failed to process PDF."
+    },
+    "headline": "Drop your PDF here or click to select",
+    "subline": "PDFs up to 25 MB · End-to-end privacy",
+    "loading": "Computing canonical hash…",
+    "cta": "Drop the file or click here"
+  },
+  "agents": {
+    "metadata": {
+      "title": "YourSign — delegate to an agent",
+      "description": "Authorize an AI agent with on-chain scope. Revocable any time."
+    },
+    "eyebrow": "Agent · Scope · Revocable on-chain",
+    "h1Lead": "Delegate to an",
+    "h1Em": "agent",
+    "h1Tail": "with on-chain scope.",
+    "subtitle": "You will sign a canonical message authorizing the agent. The delegation is registered on-chain and can be revoked at any time.",
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0",
+      "right": "spec §10 · ADR-0007"
+    },
+    "form": {
+      "agentLabel": "Agent (base58 pubkey)",
+      "agentPlaceholder": "paste the MCP / agent pubkey",
+      "scopeHashLabel": "scope_hash:",
+      "buttonIdle": "Sign and delegate",
+      "buttonSigning": "Awaiting wallet…",
+      "connectFirst": "Connect a wallet to sign the delegation.",
+      "errors": {
+        "noWallet": "Connect a wallet first.",
+        "noAgent": "Enter the agent pubkey.",
+        "unknown": "unknown failure"
+      }
+    },
+    "scopePreview": {
+      "agentFallback": "anonymous agent",
+      "authorizing": "You are authorizing: {agent}",
+      "tools": "Tools:",
+      "documents": "Documents:",
+      "spendCap": "Spend limit:",
+      "expires": "Expires:",
+      "revokeNote": "You can revoke this permission at any time. Revocation is recorded on-chain.",
+      "docsAny": "any document",
+      "docsHashes": "{count, plural, one {# specific doc} other {# specific docs}}",
+      "docsWorkspace": "workspace {workspaceId}",
+      "spendReadOnly": "read-only",
+      "spendUsdc": "{amount} USDC"
+    }
+  },
+  "sign": {
+    "metadata": {
+      "title": "YourSign — anchor PDF on-chain",
+      "description": "Anchor a SHA-256 hash on Solana via the register_document instruction."
+    },
+    "invalidHash": "Invalid hash.",
+    "back": "Go back",
+    "eyebrow": "Step 1 · Anchor hash on-chain",
+    "cluster": "Solana devnet",
+    "h1": "Register PDF on-chain",
+    "subtitle": "Connect your Solana wallet and sign the transaction. The SHA-256 hash gets anchored on-chain via the {instruction} instruction.",
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0",
+      "right": "spec AC-1.2.2 · ADR-0002"
+    },
+    "flow": {
+      "documentLabel": "Document",
+      "filenameFallback": "PDF (no metadata — opened /sign directly)",
+      "bytes": "{count} bytes",
+      "canonicalHash": "Canonical SHA-256",
+      "connectPrompt": "Connect Phantom, Backpack, Solflare or social login.",
+      "privyInitializing": "Privy authenticated, but Solana wallet still initializing…",
+      "walletLabel": "Wallet ({source})",
+      "walletSourcePrivy": "Privy embedded",
+      "walletSourceAdapter": "Wallet Adapter",
+      "balance": "Balance: {balance}",
+      "balanceLoading": "…",
+      "noFunds": "Insufficient balance. Need ~0.003 SOL for rent + fee.",
+      "faucetLink": "Get devnet SOL (faucet)",
+      "faucetSuffix": ". Paste the pubkey above and request 1 SOL. Refresh this page after.",
+      "button": {
+        "idle": "Anchor hash on-chain",
+        "building": "Building transaction…",
+        "awaitingWallet": "Approve in your wallet…",
+        "confirming": "Confirming…",
+        "done": "Anchored ✓",
+        "retry": "Try again"
+      },
+      "txSignature": "Tx signature",
+      "documentId": "document_id:",
+      "viewExplorer": "View on Solana Explorer →",
+      "errors": {
+        "noWallet": "Connect a wallet first.",
+        "submitFailed": "Failed to submit transaction."
+      }
+    }
+  },
+  "scope": {
+    "documentsAny": "any document",
+    "documentsHashes": "{count, plural, one {# specific doc} other {# specific docs}}",
+    "documentsWorkspace": "workspace {workspaceId}"
+  }
+}
