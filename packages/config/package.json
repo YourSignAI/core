@@ -1,0 +1,12 @@
+{
+  "name": "@yoursign/config",
+  "version": "0.1.0",
+  "description": "Shared TS / lint / Vitest configs.",
+  "license": "Apache-2.0",
+  "private": true,
+  "files": ["tsconfig", "vitest"],
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/react.json": "./tsconfig/react.json"
+  }
+}
