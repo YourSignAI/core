@@ -60,8 +60,8 @@ export default async function SignPage({ params }: { params: Promise<Params> }) 
         </h1>
         <p style={{ fontSize: 16, color: 'var(--ash)', margin: '0 0 32px' }}>
           {t.rich('sign.subtitle', {
-            instruction: () => (
-              <code style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>register_document</code>
+            instruction: (chunks) => (
+              <code style={{ fontFamily: 'var(--font-mono)', fontSize: 13 }}>{chunks}</code>
             ),
           })}
         </p>
