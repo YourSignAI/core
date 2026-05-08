@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import type { Env } from './env.js';
 import { authRoutes } from './routes/auth.js';
 import { agentRoutes } from './routes/agents.js';
+import { docRoutes } from './routes/documents.js';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -29,5 +30,6 @@ app.get('/healthz', (c) => c.text('ok'));
 
 app.route('/auth', authRoutes);
 app.route('/agents', agentRoutes);
+app.route('/documents', docRoutes);
 
 export default app;

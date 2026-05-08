@@ -27,13 +27,29 @@ export function PDFDropzone() {
     try {
       const buf = await file.arrayBuffer();
       const { hashHex, byteLength } = await canonicalize(buf);
-      // Stash the hash + filename in sessionStorage so /sign can pick it up.
-      sessionStorage.setItem(`yoursign:pdf:${hashHex}`, JSON.stringify({
-        filename: file.name,
-        byteLength,
-        hashHex,
-        ts: Date.now(),
-      }));
+      // Stash hash + filename + base64 bytes in sessionStorage so /sign can
+      // pick it up. Demo only — sessionStorage 5 MB cap; PDFs >3.7 MB raw fail.
+      const bytes = new Uint8Array(buf);
+      let bin = '';
+      for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]!);
+      const b64 = btoa(bin);
+      try {
+        sessionStorage.setItem(`yoursign:pdf:${hashHex}`, JSON.stringify({
+          filename: file.name,
+          byteLength,
+          hashHex,
+          ts: Date.now(),
+          b64,
+        }));
+      } catch {
+        // QuotaExceededError — fall back to metadata only; upload step skips.
+        sessionStorage.setItem(`yoursign:pdf:${hashHex}`, JSON.stringify({
+          filename: file.name,
+          byteLength,
+          hashHex,
+          ts: Date.now(),
+        }));
+      }
       router.push(`/sign/${hashHex}` as never);
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : 'Falha ao processar PDF.');
