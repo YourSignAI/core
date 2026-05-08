@@ -122,7 +122,7 @@
     "eyebrow": "Etapa 1 · Ancorar hash on-chain",
     "cluster": "Solana devnet",
     "h1": "Registrar PDF on-chain",
-    "subtitle": "Conecte sua carteira Solana e assine a transação. O hash SHA-256 fica ancorado on-chain via instrução {instruction}.",
+    "subtitle": "Conecte sua carteira Solana e assine a transação. O hash SHA-256 fica ancorado on-chain via instrução <instruction>register_document</instruction>.",
     "footer": {
       "left": "© 2026 YourSign Labs · Apache-2.0",
       "right": "spec AC-1.2.2 · ADR-0002"
