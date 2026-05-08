@@ -1,0 +1,30 @@
+[features]
+seeds = false
+skip-lint = false
+resolution = true
+
+[programs.localnet]
+yoursign = "35RbwNgx9Em28mMLZ6iWzjCnaTd4tD2NWuxrHqR76M8X"
+
+[programs.devnet]
+yoursign = "35RbwNgx9Em28mMLZ6iWzjCnaTd4tD2NWuxrHqR76M8X"
+
+[programs.mainnet]
+yoursign = "35RbwNgx9Em28mMLZ6iWzjCnaTd4tD2NWuxrHqR76M8X"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "pnpm exec vitest run --config ./tests/vitest.config.ts"
+
+[test.validator]
+url = "https://api.devnet.solana.com"
+
+[[test.validator.account]]
+address = "11111111111111111111111111111111"
+filename = "tests/fixtures/system.json"

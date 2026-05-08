@@ -1,0 +1,39 @@
+[package]
+name = "yoursign"
+version = "0.1.0"
+description = "YourSign Anchor program — document registry, signature attestations, agent delegations."
+edition = "2021"
+license = "Apache-2.0"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "yoursign"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.30.1", features = ["init-if-needed"] }
+# solana-program 1.18.0 - first 1.18 patch; doesn't pull blake3 ≥1.6 / digest 0.11
+# (which need crypto-common 0.2.x → edition2024 → rust 1.85+).
+# Platform-tools v1.42 ships rust 1.75; we stay below the edition2024 threshold.
+solana-program = "=1.18.0"
+
+
+# dev-dependencies removed for now — bankrun tests use TS via solana-bankrun NPM
+# package, not the Rust solana-program-test crate. This avoids pulling in the
+# full validator stack at build time.
+
+[profile.release]
+overflow-checks = true
+lto = "fat"
+codegen-units = 1
+
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1
