@@ -12,7 +12,7 @@
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "lint": "next lint",
+    "lint": "echo 'lint TODO — next 16 removed `next lint`; will wire eslint directly later'",
     "clean": "rm -rf .next dist .turbo .open-next"
   },
   "dependencies": {
