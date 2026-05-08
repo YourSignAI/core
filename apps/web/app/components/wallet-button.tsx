@@ -4,18 +4,19 @@ import { useEffect, useState } from 'react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { usePrivy } from '@privy-io/react-auth';
 import { useWallets as useSolanaWallets } from '@privy-io/react-auth/solana';
+import { useTranslations } from 'next-intl';
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
 export function WalletButton() {
-  // Always render markup; differ behavior on hydration so SSR matches.
+  const t = useTranslations('wallet');
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
     return (
       <button className="btn btn-secondary" style={{ padding: '10px 16px' }} disabled>
-        Conectar
+        {t('connect')}
       </button>
     );
   }
@@ -28,19 +29,19 @@ export function WalletButton() {
 }
 
 function PrivyAwareButton() {
+  const t = useTranslations('wallet');
   const { ready, authenticated, login, logout, user } = usePrivy();
   const { wallets: solanaWallets } = useSolanaWallets();
 
   if (!ready) {
     return (
       <button className="btn btn-secondary" style={{ padding: '10px 16px' }} disabled>
-        Carregando…
+        {t('loading')}
       </button>
     );
   }
 
   if (authenticated) {
-    // Prefer first Solana wallet (embedded or external). Falls back to email/handle.
     const solana = solanaWallets[0]?.address ?? '';
     const fallback = user?.email?.address ?? user?.wallet?.address ?? '';
     const wallet = solana || fallback;
@@ -48,7 +49,7 @@ function PrivyAwareButton() {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <CopyPill address={wallet} solana={!!solana} />
         <button onClick={logout} className="btn btn-ghost" style={{ padding: '8px 14px' }}>
-          Sair
+          {t('logout')}
         </button>
       </div>
     );
@@ -56,15 +57,16 @@ function PrivyAwareButton() {
 
   return (
     <button onClick={login} className="btn btn-secondary" style={{ padding: '10px 16px' }}>
-      Conectar
+      {t('connect')}
     </button>
   );
 }
 
 function CopyPill({ address, solana }: { address: string; solana: boolean }) {
+  const t = useTranslations('wallet.copy');
   const [copied, setCopied] = useState(false);
   const short = address.length > 10 ? `${address.slice(0, 4)}…${address.slice(-4)}` : address;
-  const network = solana ? 'Solana' : 'no Solana wallet';
+  const network = solana ? 'Solana' : t('noSolana');
 
   async function onCopy() {
     if (!address) return;
@@ -80,10 +82,10 @@ function CopyPill({ address, solana }: { address: string; solana: boolean }) {
       type="button"
       onClick={onCopy}
       className="pill"
-      title={`${network}: ${address} (clique para copiar)`}
+      title={t('tooltip', { network, address })}
       style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6 }}
     >
-      {copied ? '✓ copiado' : short}
+      {copied ? t('copied') : short}
       {!copied ? (
         <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
           <rect x="4" y="4" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.4" />

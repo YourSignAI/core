@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { usePrivy } from '@privy-io/react-auth';
@@ -45,6 +46,8 @@ type ActiveWallet = {
 };
 
 export function SignFlow({ hashHex }: { hashHex: string }) {
+  const t = useTranslations('sign.flow');
+  const locale = useLocale();
   const { connection } = useConnection();
   const adapter = useWallet();
   const { authenticated } = usePrivy();
@@ -113,7 +116,7 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
 
   async function onAnchor() {
     if (!active) {
-      setStatus({ kind: 'error', reason: 'Conecte uma carteira primeiro.' });
+      setStatus({ kind: 'error', reason: t('errors.noWallet') });
       return;
     }
     try {
@@ -145,28 +148,29 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
     } catch (e: unknown) {
       setStatus({
         kind: 'error',
-        reason: e instanceof Error ? e.message : 'Falha ao submeter transação.',
+        reason: e instanceof Error ? e.message : t('errors.submitFailed'),
       });
     }
   }
 
   const isConnected = !!active;
   const noFunds = balance !== null && balance < 0.003;
+  const numberLocale = locale === 'pt' ? 'pt-BR' : 'en-US';
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <article className="surface-card">
-        <div className="eyebrow" style={{ marginBottom: 8 }}>Documento</div>
+        <div className="eyebrow" style={{ marginBottom: 8 }}>{t('documentLabel')}</div>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600 }}>
-          {stashed?.filename ?? 'PDF (sem metadados — abriu /sign direto)'}
+          {stashed?.filename ?? t('filenameFallback')}
         </div>
         {stashed?.byteLength ? (
           <div style={{ fontSize: 12, color: 'var(--ash)', marginTop: 4 }}>
-            {stashed.byteLength.toLocaleString('pt-BR')} bytes
+            {t('bytes', { count: stashed.byteLength.toLocaleString(numberLocale) })}
           </div>
         ) : null}
         <div style={{ marginTop: 16 }}>
-          <div className="eyebrow">SHA-256 canônico</div>
+          <div className="eyebrow">{t('canonicalHash')}</div>
           <code style={{
             display: 'block', marginTop: 4,
             fontFamily: 'var(--font-mono)', fontSize: 11,
@@ -178,11 +182,11 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
       {!isConnected ? (
         <div className="surface-card" style={{ textAlign: 'center' }}>
           <p style={{ marginTop: 0, fontSize: 15, color: 'var(--ink)' }}>
-            Conecte Phantom, Backpack, Solflare ou login social.
+            {t('connectPrompt')}
           </p>
           {!authenticated ? <WalletMultiButton /> : (
             <p style={{ fontSize: 13, color: 'var(--ash)', margin: 0 }}>
-              Privy autenticado, mas wallet Solana ainda inicializando…
+              {t('privyInitializing')}
             </p>
           )}
         </div>
@@ -190,14 +194,18 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
         <article className="surface-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
             <div className="eyebrow">
-              Carteira ({active.source === 'privy' ? 'Privy embedded' : 'Wallet Adapter'})
+              {t('walletLabel', {
+                source: active.source === 'privy' ? t('walletSourcePrivy') : t('walletSourceAdapter'),
+              })}
             </div>
             <code style={{
               fontFamily: 'var(--font-mono)', fontSize: 12,
               color: 'var(--ink)', wordBreak: 'break-all',
             }}>{active.pubkey.toBase58()}</code>
             <div style={{ marginTop: 8, fontSize: 13, color: 'var(--ash)' }}>
-              Saldo: {balance === null ? '…' : `${balance.toFixed(4)} SOL`}
+              {t('balance', {
+                balance: balance === null ? t('balanceLoading') : `${balance.toFixed(4)} SOL`,
+              })}
             </div>
           </div>
 
@@ -210,16 +218,16 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
               padding: 12,
               fontSize: 13,
             }}>
-              Saldo insuficiente. Precisa ~0.003 SOL pra rent + fee.{' '}
+              {t('noFunds')}{' '}
               <a
                 href={`https://faucet.solana.com/?address=${active.pubkey.toBase58()}`}
                 target="_blank"
                 rel="noreferrer"
                 style={{ borderBottom: '1px solid #6b4f00' }}
               >
-                Pegar SOL devnet (faucet)
+                {t('faucetLink')}
               </a>
-              . Cole o pubkey acima e peça 1 SOL. Atualiza esta página depois.
+              {t('faucetSuffix')}
             </div>
           ) : null}
 
@@ -235,12 +243,12 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
             onClick={onAnchor}
             className="btn btn-primary btn-lg"
           >
-            {status.kind === 'idle' ? 'Ancorar hash on-chain' :
-             status.kind === 'building' ? 'Construindo transação…' :
-             status.kind === 'awaiting-wallet' ? 'Aprove na carteira…' :
-             status.kind === 'confirming' ? 'Confirmando…' :
-             status.kind === 'done' ? 'Ancorado ✓' :
-             'Tentar novamente'}
+            {status.kind === 'idle' ? t('button.idle') :
+             status.kind === 'building' ? t('button.building') :
+             status.kind === 'awaiting-wallet' ? t('button.awaitingWallet') :
+             status.kind === 'confirming' ? t('button.confirming') :
+             status.kind === 'done' ? t('button.done') :
+             t('button.retry')}
           </button>
 
           {status.kind === 'error' ? (
@@ -249,7 +257,7 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
 
           {(status.kind === 'confirming' || status.kind === 'done') ? (
             <div style={{ background: 'var(--cloud)', padding: 14, borderRadius: 8 }}>
-              <div className="eyebrow">Tx signature</div>
+              <div className="eyebrow">{t('txSignature')}</div>
               <code style={{
                 display: 'block', marginTop: 4,
                 fontFamily: 'var(--font-mono)', fontSize: 11,
@@ -257,7 +265,7 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
               }}>{status.signature}</code>
               {status.kind === 'done' ? (
                 <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ash)' }}>
-                  document_id: <code style={{ color: 'var(--ink)' }}>{status.documentIdHex}</code>
+                  {t('documentId')} <code style={{ color: 'var(--ink)' }}>{status.documentIdHex}</code>
                 </div>
               ) : null}
               <a
@@ -267,7 +275,7 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
                 className="btn btn-ghost"
                 style={{ marginTop: 12, fontSize: 13 }}
               >
-                Ver no Solana Explorer →
+                {t('viewExplorer')}
               </a>
             </div>
           ) : null}

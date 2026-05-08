@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { canonicalize } from '@yoursign/pdf-engine';
 
 type VerifyResult = {
@@ -11,6 +12,7 @@ type VerifyResult = {
 };
 
 export function VerifyForm() {
+  const t = useTranslations('form');
   const [result, setResult] = useState<VerifyResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -22,13 +24,9 @@ export function VerifyForm() {
       const buf = await file.arrayBuffer();
       const { hashHex, byteLength } = await canonicalize(buf);
       setResult({ filename: file.name, hashHex, byteLength, status: 'searching' });
-      // Sprint 3 Thursday: Light Protocol RPC read for DocumentRegistry +
-      // SignatureAttestation + AgentAction. Then Ed25519 verify each sig
-      // client-side via @yoursign/crypto. For now: surface the hash so the user
-      // can confirm the canonical hash matches what the platform recorded.
       setResult((prev) => (prev ? { ...prev, status: 'awaiting_chain' } : prev));
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'falha desconhecida');
+      setErr(e instanceof Error ? e.message : t('errorUnknown'));
     } finally {
       setBusy(false);
     }
@@ -44,10 +42,10 @@ export function VerifyForm() {
           </svg>
         </div>
         <p style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, margin: '0 0 4px' }}>
-          Solte um PDF assinado aqui
+          {t('dropHeadline')}
         </p>
         <p style={{ fontSize: 13, color: 'var(--ash)', margin: 0 }}>
-          ou clique para selecionar — o hash é calculado no seu navegador
+          {t('dropSubline')}
         </p>
         <input
           type="file"
@@ -62,7 +60,7 @@ export function VerifyForm() {
 
       {busy ? (
         <p style={{ fontSize: 13, color: 'var(--ash)', textAlign: 'center', margin: 0 }}>
-          Calculando hash canônico…
+          {t('computing')}
         </p>
       ) : null}
       {err ? <p style={{ fontSize: 13, color: 'var(--error)', margin: 0 }}>{err}</p> : null}
@@ -70,9 +68,11 @@ export function VerifyForm() {
       {result ? (
         <div className="surface">
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16 }}>{result.filename}</div>
-          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--ash)' }}>{result.byteLength} bytes</div>
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--ash)' }}>
+            {t('result.bytes', { count: result.byteLength })}
+          </div>
           <div style={{ marginTop: 16 }}>
-            <div className="eyebrow">SHA-256</div>
+            <div className="eyebrow">{t('result.sha256')}</div>
             <code style={{
               display: 'block', marginTop: 4,
               fontFamily: 'var(--font-mono)', fontSize: 11,
@@ -80,10 +80,10 @@ export function VerifyForm() {
             }}>{result.hashHex}</code>
           </div>
           <div style={{ marginTop: 16, fontSize: 12, color: 'var(--ash)' }}>
-            Status:{' '}
+            {t('result.statusLabel')}{' '}
             <span style={{ color: 'var(--ink)' }}>
               {result.status === 'awaiting_chain'
-                ? 'aguardando consulta on-chain (Sprint 3 Thursday liga Light Protocol read)'
+                ? t('result.awaitingChain')
                 : result.status}
             </span>
           </div>

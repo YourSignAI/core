@@ -1,0 +1,32 @@
+{
+  "metadata": {
+    "title": "YourSign Verifier",
+    "description": "Verifique uma assinatura YourSign on-chain. Sem servidor no caminho."
+  },
+  "nav": {
+    "ariaHome": "Home",
+    "language": "Idioma",
+    "lightProtocol": "Light Protocol"
+  },
+  "page": {
+    "wordmark": "YourSign · verify",
+    "eyebrow": "Read-only · Sem backend no caminho",
+    "h1": "Verifique uma assinatura YourSign on-chain.",
+    "subtitle": "Solte um PDF assinado. O hash canônico é recalculado no seu navegador, e a verificação consulta a Solana via RPC público — sem passar pelo nosso backend (AC-5.1.2).",
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0"
+    }
+  },
+  "form": {
+    "dropHeadline": "Solte um PDF assinado aqui",
+    "dropSubline": "ou clique para selecionar — o hash é calculado no seu navegador",
+    "computing": "Calculando hash canônico…",
+    "errorUnknown": "falha desconhecida",
+    "result": {
+      "bytes": "{count} bytes",
+      "sha256": "SHA-256",
+      "statusLabel": "Status:",
+      "awaitingChain": "aguardando consulta on-chain (Sprint 3 Thursday liga Light Protocol read)"
+    }
+  }
+}
