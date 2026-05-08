@@ -13,7 +13,14 @@ app.use(
   cors({
     origin: (origin) => origin ?? '*',
     credentials: true,
-    allowHeaders: ['content-type', 'authorization'],
+    allowHeaders: [
+      'content-type',
+      'authorization',
+      'x-filename',
+      'x-canonical-hash',
+      'x-owner-b58',
+    ],
+    exposeHeaders: ['content-disposition'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   }),
 );
