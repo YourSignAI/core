@@ -19,14 +19,27 @@
   },
   "form": {
     "dropHeadline": "Drop a signed PDF here",
-    "dropSubline": "or click to select — the hash is computed in your browser",
+    "dropSubline": "hash computed in your browser, on-chain via public RPC — no backend in the path",
     "computing": "Computing canonical hash…",
+    "searching": "Looking up on-chain registry…",
     "errorUnknown": "unknown failure",
     "result": {
       "bytes": "{count} bytes",
       "sha256": "SHA-256",
-      "statusLabel": "Status:",
-      "awaitingChain": "awaiting on-chain query (Sprint 3 Thursday wires Light Protocol read)"
+      "notFound": "✗ Hash not found in the devnet program. PDF was not anchored on-chain or bytes differ from the registered version.",
+      "found": "✓ Document found on-chain. Hash matches the on-chain record.",
+      "fields": {
+        "status": "Status",
+        "documentId": "Document ID",
+        "owner": "Owner",
+        "registryPda": "Registry PDA",
+        "createdAt": "Created at",
+        "signatures": "Signatures"
+      },
+      "actions": {
+        "explorer": "Solana Explorer →",
+        "openDocument": "Open document →"
+      }
     }
   }
 }

@@ -98,7 +98,7 @@ importers:
   apps/verifier:
     dependencies:
       '@solana/web3.js':
-        specifier: ^1.95.0
+        specifier: ^1.98.4
         version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@yoursign/agent-sdk':
         specifier: workspace:*
@@ -115,12 +115,15 @@ importers:
       '@yoursign/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      bs58:
+        specifier: ^6.0.0
+        version: 6.0.0
       next:
         specifier: ^16.0.0
         version: 16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       next-intl:
         specifier: ^4.3.4
-        version: 4.11.1(@swc/helpers@0.5.21)(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
+        version: 4.11.1(@swc/helpers@0.5.21)(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -130,7 +133,7 @@ importers:
     devDependencies:
       '@opennextjs/cloudflare':
         specifier: ^1.0.0
-        version: 1.19.8(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+        version: 1.19.8(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@tailwindcss/postcss':
         specifier: ^4.0.0
         version: 4.2.4
@@ -211,7 +214,7 @@ importers:
         version: 16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       next-intl:
         specifier: ^4.3.4
-        version: 4.11.1(@swc/helpers@0.5.21)(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
+        version: 4.11.1(@swc/helpers@0.5.21)(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.9.3)
       react:
         specifier: ^19.0.0
         version: 19.2.6
@@ -224,7 +227,7 @@ importers:
     devDependencies:
       '@opennextjs/cloudflare':
         specifier: ^1.0.0
-        version: 1.19.8(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+        version: 1.19.8(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))
       '@tailwindcss/postcss':
         specifier: ^4.0.0
         version: 4.2.4
@@ -9248,7 +9251,7 @@ snapshots:
     dependencies:
       gzip-size: 6.0.0
 
-  '@opennextjs/aws@4.0.1(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))':
+  '@opennextjs/aws@4.0.1(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))':
     dependencies:
       '@ast-grep/napi': 0.40.5
       '@aws-sdk/client-cloudfront': 3.984.0
@@ -9272,11 +9275,11 @@ snapshots:
       - aws-crt
       - supports-color
 
-  '@opennextjs/cloudflare@1.19.8(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
+  '@opennextjs/cloudflare@1.19.8(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(wrangler@4.90.0(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10))':
     dependencies:
       '@ast-grep/napi': 0.40.5
       '@dotenvx/dotenvx': 1.31.0
-      '@opennextjs/aws': 4.0.1(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
+      '@opennextjs/aws': 4.0.1(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))
       ci-info: 4.4.0
       cloudflare: 4.5.0
       comment-json: 4.6.2
@@ -14173,10 +14176,6 @@ snapshots:
 
   isexe@3.1.5: {}
 
-  isomorphic-ws@4.0.1(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@5.0.10)):
-    dependencies:
-      ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@5.0.10)
-
   isomorphic-ws@4.0.1(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)):
     dependencies:
       ws: 7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -14202,7 +14201,7 @@ snapshots:
       delay: 5.0.0
       es6-promisify: 5.0.0
       eyes: 0.1.8
-      isomorphic-ws: 4.0.1(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@5.0.10))
+      isomorphic-ws: 4.0.1(ws@7.5.10(bufferutil@4.1.0)(utf-8-validate@6.0.6))
       json-stringify-safe: 5.0.1
       stream-json: 1.9.1
       uuid: 8.3.2
@@ -14708,7 +14707,7 @@ snapshots:
 
   next-intl-swc-plugin-extractor@4.11.1: {}
 
-  next-intl@4.11.1(@swc/helpers@0.5.21)(next@16.2.6(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.9.3):
+  next-intl@4.11.1(@swc/helpers@0.5.21)(next@16.2.6(@babel/core@7.29.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(react@19.2.6)(typescript@5.9.3):
     dependencies:
       '@formatjs/intl-localematcher': 0.8.6
       '@parcel/watcher': 2.5.6
