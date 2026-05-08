@@ -1,25 +1,38 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
+import { getTranslations } from 'next-intl/server';
 import { DelegateForm } from './delegate-form';
 import { Wordmark } from '../components/wordmark';
 import { WalletButton } from '../components/wallet-button';
+import { LanguageSwitcher } from '../components/language-switcher';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('agents.metadata');
+  return { title: t('title'), description: t('description') };
+}
 
 export default function AgentsPage() {
+  const t = useTranslations();
   return (
     <main>
       <header className="lp-nav">
-        <Link href="/" aria-label="Home"><Wordmark /></Link>
-        <nav className="links" aria-label="Principal">
-          <Link href="/">Início</Link>
-          <a href="https://verify.yoursign.tech">Verificar</a>
-          <a href="https://github.com/YourSignAI/core">Open-source</a>
+        <Link href="/" aria-label={t('nav.ariaHome')}><Wordmark /></Link>
+        <nav className="links" aria-label={t('nav.ariaPrincipal')}>
+          <Link href="/">{t('nav.home')}</Link>
+          <a href="https://verify.yoursign.tech">{t('nav.verify')}</a>
+          <a href="https://github.com/YourSignAI/core">{t('nav.openSource')}</a>
         </nav>
-        <WalletButton />
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <LanguageSwitcher />
+          <WalletButton />
+        </div>
       </header>
 
       <section style={{ maxWidth: 720, margin: '0 auto', padding: '64px 32px' }}>
         <div className="lp-eyebrow" style={{ justifyContent: 'flex-start' }}>
-          <span className="pill-solana"><span className="dot" />Powered by Solana</span>
-          <span className="eyebrow">Agente · Escopo · Revogável on-chain</span>
+          <span className="pill-solana"><span className="dot" />{t('home.poweredBy')}</span>
+          <span className="eyebrow">{t('agents.eyebrow')}</span>
         </div>
 
         <h1 style={{
@@ -30,11 +43,12 @@ export default function AgentsPage() {
           margin: '0 0 16px',
           textWrap: 'balance',
         }}>
-          Delegue para um <em style={{ fontStyle: 'normal', color: 'var(--rausch)' }}>agente</em> com escopo on-chain.
+          {t('agents.h1Lead')}{' '}
+          <em style={{ fontStyle: 'normal', color: 'var(--rausch)' }}>{t('agents.h1Em')}</em>{' '}
+          {t('agents.h1Tail')}
         </h1>
         <p style={{ fontSize: 17, color: 'var(--ash)', maxWidth: 580, margin: '0 0 40px' }}>
-          Você assinará uma mensagem canônica autorizando o agente. A delegação é registrada on-chain
-          e pode ser revogada a qualquer momento.
+          {t('agents.subtitle')}
         </p>
 
         <div className="surface-card">
@@ -43,8 +57,8 @@ export default function AgentsPage() {
       </section>
 
       <footer className="lp-foot">
-        <span>© 2026 YourSign Labs · Apache-2.0</span>
-        <span>spec §10 · ADR-0007</span>
+        <span>{t('agents.footer.left')}</span>
+        <span>{t('agents.footer.right')}</span>
       </footer>
     </main>
   );

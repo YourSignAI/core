@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useWallet } from '@solana/wallet-adapter-react';
 import {
   AgentScopeSchema,
@@ -31,6 +32,7 @@ function defaultScope(): AgentScope {
 }
 
 export function DelegateForm() {
+  const t = useTranslations('agents.form');
   const { publicKey, signMessage, connected } = useWallet();
   const [agentB58, setAgentB58] = useState('');
   const [scope, setScope] = useState<AgentScope>(defaultScope);
@@ -55,11 +57,11 @@ export function DelegateForm() {
 
   async function onDelegate() {
     if (!signMessage || !publicKey) {
-      setError('Conecte uma carteira primeiro.');
+      setError(t('errors.noWallet'));
       return;
     }
     if (!agentB58) {
-      setError('Informe o pubkey do agente.');
+      setError(t('errors.noAgent'));
       return;
     }
     setError(null);
@@ -86,7 +88,6 @@ export function DelegateForm() {
         'SHA-256',
         new TextEncoder().encode(message),
       );
-      // Anchor scope JSON in R2 via apps/api so verifier site can re-hash it.
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'http://127.0.0.1:8787';
       let scopeUri = '';
       try {
@@ -105,10 +106,8 @@ export function DelegateForm() {
         signatureHex: bytesToHex(sigBytes),
         scopeUri,
       });
-      // TODO once program deployed devnet: build register_agent ix tx +
-      // ed25519_program sibling ix from these inputs; submit via @solana/web3.js.
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'falha desconhecida');
+      setError(e instanceof Error ? e.message : t('errors.unknown'));
     } finally {
       setSigning(false);
     }
@@ -118,12 +117,12 @@ export function DelegateForm() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <div>
         <label className="eyebrow" style={{ display: 'block', marginBottom: 8 }}>
-          Agente (pubkey base58)
+          {t('agentLabel')}
         </label>
         <input
           value={agentB58}
           onChange={(e) => setAgentB58(e.target.value.trim())}
-          placeholder="cole o pubkey do MCP / agente"
+          placeholder={t('agentPlaceholder')}
           style={{
             width: '100%',
             border: '1px solid var(--hairline)',
@@ -139,10 +138,10 @@ export function DelegateForm() {
         />
       </div>
 
-      <ScopePreviewLight scope={scope} agentLabel={agentB58 || 'agente sem identidade'} />
+      <ScopePreviewLight scope={scope} agentLabel={agentB58} />
 
       <div style={{ fontSize: 12, color: 'var(--ash)', fontFamily: 'var(--font-mono)' }}>
-        scope_hash: <span style={{ color: 'var(--ink)' }}>{scopeHashHex || '—'}</span>
+        {t('scopeHashLabel')} <span style={{ color: 'var(--ink)' }}>{scopeHashHex || '—'}</span>
       </div>
 
       <button
@@ -151,12 +150,12 @@ export function DelegateForm() {
         className="btn btn-primary btn-lg"
         style={{ width: '100%' }}
       >
-        {signing ? 'Aguardando carteira…' : 'Assinar e delegar'}
+        {signing ? t('buttonSigning') : t('buttonIdle')}
       </button>
 
       {!connected ? (
         <p style={{ fontSize: 13, color: 'var(--ash)', textAlign: 'center', margin: 0 }}>
-          Conecte uma carteira para assinar a delegação.
+          {t('connectFirst')}
         </p>
       ) : null}
 
@@ -184,12 +183,14 @@ export function DelegateForm() {
 }
 
 function ScopePreviewLight({ scope, agentLabel }: { scope: AgentScope; agentLabel: string }) {
+  const t = useTranslations('agents.scopePreview');
+  const locale = useLocale();
   const docs =
     scope.documents === 'any'
-      ? 'qualquer documento'
+      ? t('docsAny')
       : 'hashes' in scope.documents
-        ? `${scope.documents.hashes.length} doc(s) específicos`
-        : `workspace ${scope.documents.workspaceId}`;
+        ? t('docsHashes', { count: scope.documents.hashes.length })
+        : t('docsWorkspace', { workspaceId: scope.documents.workspaceId });
   return (
     <div style={{
       background: 'var(--cloud)',
@@ -199,22 +200,24 @@ function ScopePreviewLight({ scope, agentLabel }: { scope: AgentScope; agentLabe
       fontSize: 14,
     }}>
       <div style={{ fontWeight: 600, marginBottom: 8, color: 'var(--ink)' }}>
-        Você está autorizando: {agentLabel}
+        {t('authorizing', { agent: agentLabel || t('agentFallback') })}
       </div>
       <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <li><span style={{ color: 'var(--ash)' }}>Ferramentas: </span>
+        <li><span style={{ color: 'var(--ash)' }}>{t('tools')} </span>
           <code style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{[...scope.tools].sort().join(', ')}</code>
         </li>
-        <li><span style={{ color: 'var(--ash)' }}>Documentos: </span>{docs}</li>
-        <li><span style={{ color: 'var(--ash)' }}>Limite de gasto: </span>
-          {scope.spendCapMicroUsdc === 0 ? 'apenas leitura' : `${(scope.spendCapMicroUsdc / 1_000_000).toFixed(2)} USDC`}
+        <li><span style={{ color: 'var(--ash)' }}>{t('documents')} </span>{docs}</li>
+        <li><span style={{ color: 'var(--ash)' }}>{t('spendCap')} </span>
+          {scope.spendCapMicroUsdc === 0
+            ? t('spendReadOnly')
+            : t('spendUsdc', { amount: (scope.spendCapMicroUsdc / 1_000_000).toFixed(2) })}
         </li>
-        <li><span style={{ color: 'var(--ash)' }}>Expira em: </span>
-          {new Date(scope.expiresAt).toLocaleString('pt-BR', { timeZone: 'UTC' })} UTC
+        <li><span style={{ color: 'var(--ash)' }}>{t('expires')} </span>
+          {new Date(scope.expiresAt).toLocaleString(locale === 'pt' ? 'pt-BR' : 'en-US', { timeZone: 'UTC' })} UTC
         </li>
       </ul>
       <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ash)' }}>
-        Você pode revogar essa permissão a qualquer momento. A revogação fica registrada on-chain.
+        {t('revokeNote')}
       </p>
     </div>
   );
