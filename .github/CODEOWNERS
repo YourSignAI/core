@@ -1,0 +1,25 @@
+# YourSign CODEOWNERS
+#
+# Reviewers automatically requested when paths change.
+# Sensitive paths require Architect + Security Analyst review per CLAUDE.md.
+
+# default fallback
+*                                @YourSignAI/maintainers
+
+# spec, ADRs, contracts — architect's domain
+/docs/                           @YourSignAI/architects
+/docs/01-spec.md                 @YourSignAI/architects
+/docs/adr/                       @YourSignAI/architects
+/docs/contracts/                 @YourSignAI/architects
+
+# crypto + on-chain — security review mandatory
+/packages/crypto/                @YourSignAI/security @YourSignAI/architects
+/programs/yoursign/              @YourSignAI/security @YourSignAI/architects
+
+# auth + payments — security review mandatory
+/apps/api/src/auth/              @YourSignAI/security @YourSignAI/architects
+/apps/api/src/routes/payments/   @YourSignAI/security @YourSignAI/architects
+
+# harness + verifiers — keep them honest
+/harness/                        @YourSignAI/architects
+/.github/workflows/verifier.yml  @YourSignAI/architects

@@ -1,0 +1,41 @@
+node_modules
+dist
+.next
+.turbo
+.vercel
+coverage
+.env
+.env.local
+.env.*.local
+*.log
+.DS_Store
+.idea
+.vscode/settings.json
+
+# anchor / solana
+target
+.anchor
+test-ledger
+
+# harness runtime
+harness/runs/
+!harness/runs/.gitkeep
+
+# ralph loop state — keep dir, ignore runtime files
+.loop-state/*
+!.loop-state/.gitkeep
+!.loop-state/active_sprint.txt
+!.loop-state/active_sprint.txt.bak
+
+# wrangler / cloudflare
+.wrangler
+.cf-bindings.*.json
+.cf-secrets.*.env
+.dev.vars
+
+# opennext (cloudflare pages adapter for next)
+.open-next
+
+# tsbuildinfo
+*.tsbuildinfo
+

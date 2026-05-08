@@ -1,0 +1,50 @@
+name: Anchor build & test
+
+on:
+  pull_request:
+    paths:
+      - "programs/**"
+      - ".github/workflows/anchor.yml"
+  push:
+    branches: [main]
+    paths:
+      - "programs/**"
+
+permissions:
+  contents: read
+
+env:
+  SOLANA_VERSION: "2.0.18"
+  ANCHOR_VERSION: "0.31.1"
+  RUST_VERSION: "1.79.0"
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - name: Install Solana CLI
+        run: |
+          sh -c "$(curl -sSfL https://release.anza.xyz/v${{ env.SOLANA_VERSION }}/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Install Anchor
+        run: cargo install --locked --git https://github.com/coral-xyz/anchor anchor-cli --tag v${{ env.ANCHOR_VERSION }}
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            programs/yoursign/target
+          key: cargo-${{ hashFiles('programs/**/Cargo.lock') }}
+      - name: Build
+        working-directory: programs/yoursign
+        run: anchor build
+      - name: Test
+        working-directory: programs/yoursign
+        run: anchor test --skip-local-validator || anchor test

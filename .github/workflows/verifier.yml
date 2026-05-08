@@ -1,0 +1,127 @@
+name: Symphony verifiers
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  spec-citation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify spec citation
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          REGEX='AC-[0-9]+\.[0-9]+(\.[0-9]+)?|ADR-[0-9]{4}|contract:(api|on-chain-program|events)#[A-Za-z0-9_-]+|T[0-9]+\.[0-9]+'
+          if echo "$PR_TITLE" | grep -qE "$REGEX"; then
+            echo "✓ spec ref in PR title"; exit 0
+          fi
+          if echo "$PR_BODY" | grep -qE "$REGEX"; then
+            echo "✓ spec ref in PR body"; exit 0
+          fi
+          if git log --format=%B "$BASE_SHA..$HEAD_SHA" | grep -qE "$REGEX"; then
+            echo "✓ spec ref in commit messages"; exit 0
+          fi
+          echo "✗ MISSING_SPEC_REF — see harness/verifiers/spec-citation.md"
+          exit 1
+
+  no-secret-leak:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Static secret scan
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          DIFF=$(git diff "$BASE_SHA..$HEAD_SHA" -- ':!**/test/fixtures/**' ':!harness/verifiers/no-secret-leak.allowlist')
+          # Patterns: AWS, GitHub PAT, base58 ≥87 chars, hex 64/128, BIP39 looks
+          PATTERNS='AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{60,}|[1-9A-HJ-NP-Za-km-z]{87,}|\b[a-fA-F0-9]{64}\b|\b[a-fA-F0-9]{128}\b'
+          if echo "$DIFF" | grep -E '^\+' | grep -vE '^\+\+\+' | grep -qE "$PATTERNS"; then
+            echo "✗ POSSIBLE_SECRET_LEAK — review diff against harness/verifiers/no-secret-leak.md"
+            exit 1
+          fi
+          echo "✓ no secret patterns in added lines"
+
+  contract-conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.15.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Contract conformance
+        run: |
+          if [ -f scripts/verify-contract-conformance.ts ]; then
+            pnpm exec tsx scripts/verify-contract-conformance.ts
+          else
+            echo "skipped — verifier not wired yet (T0.7)"
+          fi
+
+  adr-presence:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: ADR required for sensitive changes
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          SENSITIVE=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" \
+            | grep -E '^(packages/crypto|programs/yoursign|apps/api/src/auth|apps/api/src/routes/payments)/' \
+            | grep -E '^vercel\.ts$' \
+            || true)
+          if [ -z "$SENSITIVE" ]; then
+            echo "✓ no sensitive paths touched"; exit 0
+          fi
+          if echo "$PR_BODY" | grep -qE 'ADR-[0-9]{4}'; then
+            echo "✓ ADR cited"; exit 0
+          fi
+          echo "✗ sensitive change without ADR ref — see harness/verifiers/adr-presence.md"
+          echo "Touched: $SENSITIVE"
+          exit 1
+
+  lineage-block:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Lineage block for DocuSeal-ported code
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          set -euo pipefail
+          PORTED=$(git diff --name-only "$BASE_SHA..$HEAD_SHA" \
+            | grep -E '^packages/core-domain/src/(submitter|submission|template|audit-event|workflow|state)\.ts$' \
+            || true)
+          if [ -z "$PORTED" ]; then
+            echo "✓ no DocuSeal-ported files touched"; exit 0
+          fi
+          if echo "$PR_BODY" | grep -qiE 'concept lineage'; then
+            echo "✓ lineage block present"; exit 0
+          fi
+          echo "✗ ported file changed without lineage block — see harness/verifiers/lineage-block.md"
+          exit 1
