@@ -1,0 +1,44 @@
+# YourSign MCP server. ADR-0007 + ADR-0008.
+# Secrets MUST be set via `wrangler secret put`. Never commit values.
+name = "yoursign-mcp"
+main = "src/index.ts"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+# Solana RPC + Light Protocol RPC URLs are non-secret env (still injectable per env).
+[vars]
+SOLANA_CLUSTER = "devnet"
+SOLANA_RPC_URL = "https://api.devnet.solana.com"
+LIGHT_RPC_URL = "https://devnet.helius-rpc.com"
+PROGRAM_ID = "35RbwNgx9Em28mMLZ6iWzjCnaTd4tD2NWuxrHqR76M8X"
+SCOPE_R2_BUCKET = "yoursign-agent-scopes"
+
+# Required wrangler secrets (set via `wrangler secret put`):
+#   - AGENT_KEYPAIR_SECRET — base58-encoded 32-byte ed25519 secret for the demo agent.
+#                            Production stores per-workspace keys in KV (see SCOPES_KV).
+#   - AI_GATEWAY_TOKEN     — Cloudflare AI Gateway access token.
+#   - ANTHROPIC_API_KEY    — pass-through token.
+
+# R2 bucket for off-chain scope JSON (anchored on-chain by SHA-256 hash).
+[[r2_buckets]]
+binding = "SCOPES"
+bucket_name = "yoursign-agent-scopes"
+
+# KV namespace for ToolManifest cache + ephemeral session state.
+[[kv_namespaces]]
+binding = "MCP_SESSIONS"
+id = "a2f340d43e214fb4823ffbde2dddaf01"
+
+# Workers AI fallback per ADR-0008.
+[ai]
+binding = "AI"
+
+[env.production]
+name = "yoursign-mcp-prod"
+[env.production.vars]
+SOLANA_CLUSTER = "mainnet-beta"
+SOLANA_RPC_URL = "https://api.mainnet-beta.solana.com"
+LIGHT_RPC_URL = "https://mainnet.helius-rpc.com"
+PROGRAM_ID = "REPLACE_WITH_MAINNET_PROGRAM_ID"
+SCOPE_R2_BUCKET = "yoursign-agent-scopes-prod"
