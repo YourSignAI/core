@@ -19,14 +19,27 @@
   },
   "form": {
     "dropHeadline": "Solte um PDF assinado aqui",
-    "dropSubline": "ou clique para selecionar — o hash é calculado no seu navegador",
+    "dropSubline": "hash calculado no navegador, on-chain via RPC público — sem nosso backend",
     "computing": "Calculando hash canônico…",
+    "searching": "Buscando registro on-chain…",
     "errorUnknown": "falha desconhecida",
     "result": {
       "bytes": "{count} bytes",
       "sha256": "SHA-256",
-      "statusLabel": "Status:",
-      "awaitingChain": "aguardando consulta on-chain (Sprint 3 Thursday liga Light Protocol read)"
+      "notFound": "✗ Hash não encontrado no programa devnet. PDF não foi ancorado on-chain ou bytes diferem da versão registrada.",
+      "found": "✓ Documento encontrado on-chain. Hash bate com o registro.",
+      "fields": {
+        "status": "Status",
+        "documentId": "Document ID",
+        "owner": "Proprietário",
+        "registryPda": "Registry PDA",
+        "createdAt": "Criado em",
+        "signatures": "Assinaturas"
+      },
+      "actions": {
+        "explorer": "Solana Explorer →",
+        "openDocument": "Abrir documento →"
+      }
     }
   }
 }
