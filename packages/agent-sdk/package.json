@@ -1,0 +1,43 @@
+{
+  "name": "@yoursign/agent-sdk",
+  "version": "0.1.0",
+  "description": "Canonical agent delegation, scope hashing, and Ed25519 attestation primitives. See ADR-0007 + spec §10.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./messages": {
+      "types": "./dist/messages.d.ts",
+      "import": "./dist/messages.js"
+    },
+    "./scope": {
+      "types": "./dist/scope.d.ts",
+      "import": "./dist/scope.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "echo 'lint TODO'",
+    "clean": "rm -rf dist .turbo"
+  },
+  "dependencies": {
+    "@noble/ed25519": "^2.2.0",
+    "@noble/hashes": "^1.6.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0"
+  }
+}
