@@ -1,0 +1,30 @@
+{
+  "name": "@yoursign/worker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "YourSign worker. Cloudflare Queues consumer (anchor-document, anchor-signature). Sprint 2 Thursday lands the real anchoring path.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests",
+    "lint": "echo 'lint TODO'",
+    "clean": "rm -rf dist .turbo .wrangler"
+  },
+  "dependencies": {
+    "@yoursign/agent-sdk": "workspace:*",
+    "@yoursign/crypto": "workspace:*",
+    "@yoursign/pdf-engine": "workspace:*",
+    "@yoursign/solana-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.99.0"
+  }
+}
