@@ -1,0 +1,31 @@
+{
+  "name": "@yoursign/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Cloudflare Worker exposing YourSign as an MCP server. 4 tools: delegate, sign_document, verify, revoke. See spec §10.4 + ADR-0007.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:prod": "wrangler deploy --env production",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "echo 'lint TODO'",
+    "clean": "rm -rf dist .turbo .wrangler"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@yoursign/agent-sdk": "workspace:*",
+    "@noble/hashes": "^1.6.0",
+    "hono": "^4.6.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.0",
+    "wrangler": "^3.99.0"
+  }
+}
