@@ -1,0 +1,3 @@
+# Ralph loop state directory.
+# Files: active_sprint.txt, ralph.pid, logs/iter-*.log
+# Most contents gitignored; this file keeps the directory in git.
