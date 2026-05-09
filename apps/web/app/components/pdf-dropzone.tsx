@@ -2,11 +2,13 @@
 
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { canonicalize } from '@yoursign/pdf-engine';
 
 const MAX_BYTES = 25 * 1024 * 1024;
 
 export function PDFDropzone() {
+  const t = useTranslations('dropzone');
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
@@ -16,11 +18,11 @@ export function PDFDropzone() {
   async function process(file: File) {
     setErr(null);
     if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setErr('Apenas PDF.');
+      setErr(t('errors.onlyPdf'));
       return;
     }
     if (file.size > MAX_BYTES) {
-      setErr('PDF maior que 25 MB.');
+      setErr(t('errors.tooLarge'));
       return;
     }
     setBusy(true);
@@ -52,7 +54,7 @@ export function PDFDropzone() {
       }
       router.push(`/sign/${hashHex}` as never);
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'Falha ao processar PDF.');
+      setErr(e instanceof Error ? e.message : t('errors.processFailed'));
       setBusy(false);
     }
   }
@@ -85,14 +87,14 @@ export function PDFDropzone() {
               <path d="M4 14V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V14" stroke="#222" strokeWidth="1.6" strokeLinecap="round" />
             </svg>
           </div>
-          <p className="dz-h">Arraste seu PDF aqui ou clique para selecionar</p>
-          <p className="dz-sub">Aceitamos PDFs até 25 MB · Privacidade ponta a ponta</p>
+          <p className="dz-h">{t('headline')}</p>
+          <p className="dz-sub">{t('subline')}</p>
           {busy ? (
             <p className="dz-link" style={{ borderBottom: 0, color: 'var(--rausch)' }}>
-              Calculando hash canônico…
+              {t('loading')}
             </p>
           ) : (
-            <span className="dz-link">Solte o arquivo ou clique aqui</span>
+            <span className="dz-link">{t('cta')}</span>
           )}
         </div>
         <input

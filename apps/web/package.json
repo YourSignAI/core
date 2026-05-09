@@ -12,7 +12,7 @@
     "deploy": "opennextjs-cloudflare build && wrangler deploy",
     "typecheck": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
-    "lint": "next lint",
+    "lint": "echo 'lint TODO — next 16 removed `next lint`; will wire eslint directly later'",
     "clean": "rm -rf .next dist .turbo .open-next"
   },
   "dependencies": {
@@ -32,6 +32,7 @@
     "@yoursign/ui": "workspace:*",
     "bs58": "^6.0.0",
     "next": "^16.0.0",
+    "next-intl": "^4.3.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "zod": "^3.23.0"

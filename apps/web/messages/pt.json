@@ -1,0 +1,169 @@
+{
+  "metadata": {
+    "title": "YourSign — assinatura descentralizada",
+    "description": "Assine documentos com sua carteira Solana. Verificável on-chain. Sem servidor no caminho."
+  },
+  "nav": {
+    "ariaPrincipal": "Principal",
+    "ariaHome": "Home",
+    "howItWorks": "Como funciona",
+    "verify": "Verificar",
+    "openSource": "Open-source",
+    "delegateAgent": "Delegar agente",
+    "home": "Início",
+    "language": "Idioma"
+  },
+  "wallet": {
+    "connect": "Conectar",
+    "loading": "Carregando…",
+    "logout": "Sair",
+    "copy": {
+      "tooltip": "{network}: {address} (clique para copiar)",
+      "copied": "✓ copiado",
+      "noSolana": "sem carteira Solana"
+    }
+  },
+  "home": {
+    "eyebrow": "Assinatura criptográfica · Custo zero · Agentes sob controle",
+    "poweredBy": "Powered by Solana",
+    "h1Lead": "Faça o upload do seu contrato e assine de forma",
+    "h1Em": "criptográfica",
+    "h1Tail": "em segundos.",
+    "subtitle": "Chave pública Solana, hash SHA-256 ancorado on-chain, sem taxa de gás. E delegue tarefas a um agente de IA com escopo e prazo — tudo revogável on-chain.",
+    "trust": {
+      "noGas": "Zero taxa de gás",
+      "immutableHash": "Hash imutável on-chain",
+      "noSignup": "Sem cadastro inicial",
+      "legalValidity": "Validade jurídica MP 2.200-2"
+    },
+    "how": {
+      "heading": "Três passos. Nenhum cartão de crédito.",
+      "step1": {
+        "num": "01 — UPLOAD",
+        "title": "Solte o PDF, deixe a gente ler.",
+        "body": "OCR detecta automaticamente onde a assinatura, rubrica e data devem ir. Você ajusta o que quiser arrastando blocos."
+      },
+      "step2": {
+        "num": "02 — IDENTIDADE",
+        "title": "Conecte uma carteira ou faça login com email.",
+        "body": "Phantom, Backpack, Solflare — ou login social que cria uma carteira invisível. Você nunca precisa ver uma seed phrase."
+      },
+      "step3": {
+        "num": "03 — ASSINATURA",
+        "title": "Aprove uma mensagem off-chain.",
+        "body": "YourSign gera um hash SHA-256 do conteúdo, você assina com sua chave Solana e a prova fica imutável on-chain via Light Protocol."
+      }
+    },
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0",
+      "right": "Validade jurídica · Auditoria pública · ICP-Brasil opcional"
+    }
+  },
+  "dropzone": {
+    "errors": {
+      "onlyPdf": "Apenas PDF.",
+      "tooLarge": "PDF maior que 25 MB.",
+      "processFailed": "Falha ao processar PDF."
+    },
+    "headline": "Arraste seu PDF aqui ou clique para selecionar",
+    "subline": "Aceitamos PDFs até 25 MB · Privacidade ponta a ponta",
+    "loading": "Calculando hash canônico…",
+    "cta": "Solte o arquivo ou clique aqui"
+  },
+  "agents": {
+    "metadata": {
+      "title": "YourSign — delegar para um agente",
+      "description": "Autorize um agente de IA com escopo on-chain. Revogável a qualquer momento."
+    },
+    "eyebrow": "Agente · Escopo · Revogável on-chain",
+    "h1Lead": "Delegue para um",
+    "h1Em": "agente",
+    "h1Tail": "com escopo on-chain.",
+    "subtitle": "Você assinará uma mensagem canônica autorizando o agente. A delegação é registrada on-chain e pode ser revogada a qualquer momento.",
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0",
+      "right": "spec §10 · ADR-0007"
+    },
+    "form": {
+      "agentLabel": "Agente (pubkey base58)",
+      "agentPlaceholder": "cole o pubkey do MCP / agente",
+      "scopeHashLabel": "scope_hash:",
+      "buttonIdle": "Assinar e delegar",
+      "buttonSigning": "Aguardando carteira…",
+      "connectFirst": "Conecte uma carteira para assinar a delegação.",
+      "errors": {
+        "noWallet": "Conecte uma carteira primeiro.",
+        "noAgent": "Informe o pubkey do agente.",
+        "unknown": "falha desconhecida"
+      }
+    },
+    "scopePreview": {
+      "agentFallback": "agente sem identidade",
+      "authorizing": "Você está autorizando: {agent}",
+      "tools": "Ferramentas:",
+      "documents": "Documentos:",
+      "spendCap": "Limite de gasto:",
+      "expires": "Expira em:",
+      "revokeNote": "Você pode revogar essa permissão a qualquer momento. A revogação fica registrada on-chain.",
+      "docsAny": "qualquer documento",
+      "docsHashes": "{count, plural, one {# doc específico} other {# docs específicos}}",
+      "docsWorkspace": "workspace {workspaceId}",
+      "spendReadOnly": "apenas leitura",
+      "spendUsdc": "{amount} USDC"
+    }
+  },
+  "sign": {
+    "metadata": {
+      "title": "YourSign — ancorar PDF on-chain",
+      "description": "Ancore um hash SHA-256 na Solana via instrução register_document."
+    },
+    "invalidHash": "Hash inválido.",
+    "back": "Voltar",
+    "eyebrow": "Etapa 1 · Ancorar hash on-chain",
+    "cluster": "Solana devnet",
+    "h1": "Registrar PDF on-chain",
+    "subtitle": "Conecte sua carteira Solana e assine a transação. O hash SHA-256 fica ancorado on-chain via instrução <instruction>register_document</instruction>.",
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0",
+      "right": "spec AC-1.2.2 · ADR-0002"
+    },
+    "flow": {
+      "documentLabel": "Documento",
+      "filenameFallback": "PDF (sem metadados — abriu /sign direto)",
+      "bytes": "{count} bytes",
+      "canonicalHash": "SHA-256 canônico",
+      "connectPrompt": "Conecte Phantom, Backpack, Solflare ou login social.",
+      "privyInitializing": "Privy autenticado, mas wallet Solana ainda inicializando…",
+      "walletLabel": "Carteira ({source})",
+      "walletSourcePrivy": "Privy embedded",
+      "walletSourceAdapter": "Wallet Adapter",
+      "balance": "Saldo: {balance}",
+      "balanceLoading": "…",
+      "noFunds": "Saldo insuficiente. Precisa ~0.003 SOL pra rent + fee.",
+      "faucetLink": "Pegar SOL devnet (faucet)",
+      "faucetSuffix": ". Cole o pubkey acima e peça 1 SOL. Atualiza esta página depois.",
+      "button": {
+        "idle": "Ancorar hash on-chain",
+        "building": "Construindo transação…",
+        "awaitingWallet": "Aprove na carteira…",
+        "confirming": "Confirmando…",
+        "done": "Ancorado ✓",
+        "retry": "Tentar novamente"
+      },
+      "txSignature": "Tx signature",
+      "documentId": "document_id:",
+      "viewExplorer": "Ver no Solana Explorer →",
+      "openDocument": "Abrir documento →",
+      "share": "Compartilhe:",
+      "errors": {
+        "noWallet": "Conecte uma carteira primeiro.",
+        "submitFailed": "Falha ao submeter transação."
+      }
+    }
+  },
+  "scope": {
+    "documentsAny": "qualquer documento",
+    "documentsHashes": "{count, plural, one {# doc específico} other {# docs específicos}}",
+    "documentsWorkspace": "workspace {workspaceId}"
+  }
+}

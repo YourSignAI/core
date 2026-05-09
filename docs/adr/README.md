@@ -14,6 +14,7 @@
 | [0006](./0006-wallet-and-auth.md) | Wallet Adapter + Privy + SIWS | Accepted |
 | [0007](./0007-agent-identity-model.md) | On-chain agent delegation, scoped attestation, revocable | Accepted |
 | [0008](./0008-ai-gateway-routing.md) | Cloudflare AI Gateway → Anthropic primary, Workers AI fallback | Accepted |
+| [0009](./0009-i18n-en-pt.md) | i18n: next-intl, cookie-based locale, English default | Accepted |
 
 ## How to write a new ADR
 

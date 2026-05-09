@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Connection, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { canonicalize } from '@yoursign/pdf-engine';
@@ -75,6 +76,7 @@ async function findOnChain(hashHex: string): Promise<Match | null> {
 }
 
 export function VerifyForm() {
+  const t = useTranslations('form');
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -93,7 +95,7 @@ export function VerifyForm() {
         setResult({ kind: 'no_record', filename: file.name, byteLength, hashHex });
       }
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : 'falha desconhecida');
+      setErr(e instanceof Error ? e.message : t('errorUnknown'));
     } finally {
       setBusy(false);
     }
@@ -109,10 +111,10 @@ export function VerifyForm() {
           </svg>
         </div>
         <p style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, margin: '0 0 4px' }}>
-          Solte um PDF assinado aqui
+          {t('dropHeadline')}
         </p>
         <p style={{ fontSize: 13, color: 'var(--ash)', margin: 0 }}>
-          hash calculado no navegador, on-chain via RPC público — sem nosso backend
+          {t('dropSubline')}
         </p>
         <input
           type="file"
@@ -127,7 +129,7 @@ export function VerifyForm() {
 
       {busy ? (
         <p style={{ fontSize: 13, color: 'var(--ash)', textAlign: 'center', margin: 0 }}>
-          {result?.kind === 'searching' ? 'Buscando registro on-chain…' : 'Calculando hash canônico…'}
+          {result?.kind === 'searching' ? t('searching') : t('computing')}
         </p>
       ) : null}
       {err ? <p style={{ fontSize: 13, color: 'var(--error)', margin: 0 }}>{err}</p> : null}
@@ -135,9 +137,11 @@ export function VerifyForm() {
       {result ? (
         <div className="surface">
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 600, fontSize: 16 }}>{result.filename}</div>
-          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--ash)' }}>{result.byteLength} bytes</div>
+          <div style={{ marginTop: 4, fontSize: 12, color: 'var(--ash)' }}>
+            {t('result.bytes', { count: result.byteLength })}
+          </div>
           <div style={{ marginTop: 16 }}>
-            <div className="eyebrow">SHA-256</div>
+            <div className="eyebrow">{t('result.sha256')}</div>
             <code style={{
               display: 'block', marginTop: 4,
               fontFamily: 'var(--font-mono)', fontSize: 11,
@@ -151,8 +155,7 @@ export function VerifyForm() {
               background: '#fff5f5', border: '1px solid #f5c6c6',
               borderRadius: 8, fontSize: 13, color: '#8a2222',
             }}>
-              ✗ Hash não encontrado no programa devnet. PDF não foi ancorado on-chain
-              ou bytes diferem da versão registrada.
+              {t('result.notFound')}
             </div>
           ) : null}
 
@@ -163,19 +166,19 @@ export function VerifyForm() {
                 background: '#eaffe7', border: '1px solid #a7e8a7',
                 borderRadius: 8, fontSize: 13, color: '#1d6b1d',
               }}>
-                ✓ Documento encontrado on-chain. Hash bate com o registro.
+                {t('result.found')}
               </div>
               <div style={{ marginTop: 16, display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
-                <Field label="Status" value={result.match.status} />
-                <Field label="Document ID" value={result.match.documentIdHex} />
-                <Field label="Proprietário" value={result.match.ownerB58} />
-                <Field label="Registry PDA" value={result.match.registryPda} />
+                <Field label={t('result.fields.status')} value={result.match.status} />
+                <Field label={t('result.fields.documentId')} value={result.match.documentIdHex} />
+                <Field label={t('result.fields.owner')} value={result.match.ownerB58} />
+                <Field label={t('result.fields.registryPda')} value={result.match.registryPda} />
                 <Field
-                  label="Criado em"
-                  value={new Date(result.match.createdAt).toLocaleString('pt-BR', { timeZone: 'UTC' }) + ' UTC'}
+                  label={t('result.fields.createdAt')}
+                  value={new Date(result.match.createdAt).toLocaleString(undefined, { timeZone: 'UTC' }) + ' UTC'}
                 />
                 <Field
-                  label="Assinaturas"
+                  label={t('result.fields.signatures')}
                   value={`${result.match.completedSigners} / ${result.match.requiredSigners}`}
                 />
               </div>
@@ -191,7 +194,7 @@ export function VerifyForm() {
                     fontSize: 13, fontWeight: 500,
                   }}
                 >
-                  Solana Explorer →
+                  {t('result.actions.explorer')}
                 </a>
                 <a
                   href={`https://yoursign-web.videostreaminginc.workers.dev/d/${result.match.documentIdHex}`}
@@ -204,7 +207,7 @@ export function VerifyForm() {
                     display: 'inline-block',
                   }}
                 >
-                  Abrir documento →
+                  {t('result.actions.openDocument')}
                 </a>
               </div>
             </>

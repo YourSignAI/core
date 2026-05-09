@@ -1,80 +1,81 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { WalletButton } from './components/wallet-button';
 import { Wordmark } from './components/wordmark';
 import { PDFDropzone } from './components/pdf-dropzone';
+import { LanguageSwitcher } from './components/language-switcher';
 
 export default function HomePage() {
+  const t = useTranslations();
   return (
     <main>
       <header className="lp-nav">
-        <Link href="/" aria-label="Home">
+        <Link href="/" aria-label={t('nav.ariaHome')}>
           <Wordmark />
         </Link>
-        <nav className="links" aria-label="Principal">
-          <a href="#how">Como funciona</a>
-          <a href="https://verify.yoursign.tech">Verificar</a>
-          <a href="https://github.com/YourSignAI/core">Open-source</a>
+        <nav className="links" aria-label={t('nav.ariaPrincipal')}>
+          <a href="#how">{t('nav.howItWorks')}</a>
+          <a href="https://verify.yoursign.tech">{t('nav.verify')}</a>
+          <a href="https://github.com/YourSignAI/core">{t('nav.openSource')}</a>
         </nav>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <LanguageSwitcher />
           <WalletButton />
           <Link href="/agents" className="btn btn-secondary" style={{ padding: '10px 16px' }}>
-            Delegar agente
+            {t('nav.delegateAgent')}
           </Link>
         </div>
       </header>
 
       <section className="lp-hero">
         <div className="lp-eyebrow">
-          <span className="pill-solana"><span className="dot" />Powered by Solana</span>
+          <span className="pill-solana"><span className="dot" />{t('home.poweredBy')}</span>
           <span className="eyebrow" style={{ fontSize: 11 }}>
-            Assinatura criptográfica · Custo zero · Agentes sob controle
+            {t('home.eyebrow')}
           </span>
         </div>
 
         <h1 className="lp-h1">
-          Faça o upload do seu contrato e assine de forma <em>criptográfica</em> em segundos.
+          {t('home.h1Lead')} <em>{t('home.h1Em')}</em> {t('home.h1Tail')}
         </h1>
-        <p className="lp-sub">
-          Chave pública Solana, hash SHA-256 ancorado on-chain, sem taxa de gás. E delegue tarefas a
-          um agente de IA com escopo e prazo — tudo revogável on-chain.
-        </p>
+        <p className="lp-sub">{t('home.subtitle')}</p>
 
         <PDFDropzone />
 
         <div className="trust-row">
-          <TrustItem label="Zero taxa de gás" />
-          <TrustItem label="Hash imutável on-chain" />
-          <TrustItem label="Sem cadastro inicial" />
-          <TrustItem label="Validade jurídica MP 2.200-2" />
+          <TrustItem label={t('home.trust.noGas')} />
+          <TrustItem label={t('home.trust.immutableHash')} />
+          <TrustItem label={t('home.trust.noSignup')} />
+          <TrustItem label={t('home.trust.legalValidity')} />
         </div>
       </section>
 
       <section className="lp-how" id="how">
         <div className="lp-how-inner">
-          <h2 className="lp-how-h">Três passos. Nenhum cartão de crédito.</h2>
+          <h2 className="lp-how-h">{t('home.how.heading')}</h2>
           <div className="lp-steps">
             <Step
-              num="01 — UPLOAD"
-              title="Solte o PDF, deixe a gente ler."
-              body="OCR detecta automaticamente onde a assinatura, rubrica e data devem ir. Você ajusta o que quiser arrastando blocos."
+              num={t('home.how.step1.num')}
+              title={t('home.how.step1.title')}
+              body={t('home.how.step1.body')}
             />
             <Step
-              num="02 — IDENTIDADE"
-              title="Conecte uma carteira ou faça login com email."
-              body="Phantom, Backpack, Solflare — ou login social que cria uma carteira invisível. Você nunca precisa ver uma seed phrase."
+              num={t('home.how.step2.num')}
+              title={t('home.how.step2.title')}
+              body={t('home.how.step2.body')}
             />
             <Step
-              num="03 — ASSINATURA"
-              title="Aprove uma mensagem off-chain."
-              body="YourSign gera um hash SHA-256 do conteúdo, você assina com sua chave Solana e a prova fica imutável on-chain via Light Protocol."
+              num={t('home.how.step3.num')}
+              title={t('home.how.step3.title')}
+              body={t('home.how.step3.body')}
             />
           </div>
         </div>
       </section>
 
       <footer className="lp-foot">
-        <span>© 2026 YourSign Labs · Apache-2.0</span>
-        <span>Validade jurídica · Auditoria pública · ICP-Brasil opcional</span>
+        <span>{t('home.footer.left')}</span>
+        <span>{t('home.footer.right')}</span>
       </footer>
     </main>
   );
