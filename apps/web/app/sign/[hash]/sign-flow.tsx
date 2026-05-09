@@ -140,6 +140,32 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
     }
   }, [hashHex]);
 
+  // Fallback: when sessionStorage is empty (signer B opens link from a fresh
+  // browser, or owner reopens after closing the tab) and the doc is already
+  // anchored, fetch filename + byteLength from the API blob metadata.
+  useEffect(() => {
+    if (stashed) return;
+    if (!registry) return;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://yoursign-api.videostreaminginc.workers.dev';
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`${apiUrl}/documents/${registry.documentIdHex}`, { cache: 'no-store' });
+        if (!r.ok) return;
+        const meta = (await r.json()) as { filename?: string; byteLength?: number };
+        if (!cancelled && meta.filename) {
+          setStashed({
+            filename: meta.filename,
+            byteLength: meta.byteLength ?? 0,
+            hashHex,
+            ts: Date.now(),
+          });
+        }
+      } catch { /* best-effort */ }
+    })();
+    return () => { cancelled = true; };
+  }, [registry, stashed, hashHex]);
+
   // Detect on-chain registry mode (register vs attest).
   useEffect(() => {
     let cancelled = false;
