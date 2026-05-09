@@ -155,6 +155,16 @@
       "viewExplorer": "Ver no Solana Explorer →",
       "openDocument": "Abrir documento →",
       "share": "Compartilhe:",
+      "multi": {
+        "detecting": "Checando registro on-chain…",
+        "statusPrefix": "Status do documento:",
+        "ownerLabel": "Registrado por:",
+        "requiredSignersLabel": "Assinantes necessários (incluindo você)",
+        "requiredSignersHint": "Quantas pessoas precisam assinar até o documento ficar Completed. Cada uma abre a mesma URL /sign com a wallet dela.",
+        "alreadySigned": "✓ Essa wallet já assinou esse documento.",
+        "signButton": "Assinar documento",
+        "shareSignerLink": "Manda esse link pros outros assinantes:"
+      },
       "errors": {
         "noWallet": "Conecte uma carteira primeiro.",
         "submitFailed": "Falha ao submeter transação."
