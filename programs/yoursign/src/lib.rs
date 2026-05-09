@@ -9,6 +9,7 @@
 // are unchanged from v0.1, so existing on-chain registries remain readable.
 
 use anchor_lang::prelude::*;
+use anchor_lang::system_program::{transfer, Transfer};
 
 declare_id!("35RbwNgx9Em28mMLZ6iWzjCnaTd4tD2NWuxrHqR76M8X");
 
@@ -17,6 +18,16 @@ pub mod state;
 
 use crate::errors::YourSignError;
 use crate::state::*;
+
+// Treasury wallet — collects per-instruction fees enforced via CPI. The
+// account constraint pins this pubkey so callers cannot redirect the fee.
+pub mod treasury {
+    use anchor_lang::declare_id;
+    declare_id!("5zUvmko9FM3JM4wwXnb8C3HUY6kRRyK2mZYg4V1E9vMm");
+}
+
+const REGISTER_FEE_LAMPORTS: u64 = 1_000_000;   // 0.001 SOL
+const ATTEST_FEE_LAMPORTS: u64 = 500_000;        // 0.0005 SOL
 
 #[program]
 pub mod yoursign {
@@ -31,6 +42,20 @@ pub mod yoursign {
             args.required_signers >= 1 && args.required_signers <= 50,
             YourSignError::SignerNotAuthorized
         );
+
+        // Treasury fee enforced via CPI. Caller cannot bypass this — the
+        // address constraint pins the treasury account.
+        transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.owner.to_account_info(),
+                    to: ctx.accounts.treasury.to_account_info(),
+                },
+            ),
+            REGISTER_FEE_LAMPORTS,
+        )?;
+
         let reg = &mut ctx.accounts.registry;
         reg.document_id = args.document_id;
         reg.canonical_hash = args.canonical_hash;
@@ -67,6 +92,19 @@ pub mod yoursign {
             registry.document_id == args.document_id,
             YourSignError::SignerNotAuthorized
         );
+
+        // Treasury fee enforced via CPI. Same caller-cannot-bypass guarantee
+        // as register_document.
+        transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                Transfer {
+                    from: ctx.accounts.signer.to_account_info(),
+                    to: ctx.accounts.treasury.to_account_info(),
+                },
+            ),
+            ATTEST_FEE_LAMPORTS,
+        )?;
 
         let att = &mut ctx.accounts.attestation;
         att.document_id = args.document_id;
@@ -124,6 +162,10 @@ pub struct RegisterDocument<'info> {
     pub registry: Account<'info, DocumentRegistry>,
     #[account(mut)]
     pub owner: Signer<'info>,
+    /// CHECK: pinned to the treasury pubkey above; receives the platform fee
+    /// via CPI in the handler.
+    #[account(mut, address = crate::treasury::ID)]
+    pub treasury: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -146,6 +188,10 @@ pub struct AttestSignature<'info> {
     pub attestation: Account<'info, SignatureAttestation>,
     #[account(mut)]
     pub signer: Signer<'info>,
+    /// CHECK: pinned to the treasury pubkey above; receives the platform fee
+    /// via CPI in the handler.
+    #[account(mut, address = crate::treasury::ID)]
+    pub treasury: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 

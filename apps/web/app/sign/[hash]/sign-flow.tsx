@@ -10,7 +10,7 @@ import {
   useSignAndSendTransaction,
 } from '@privy-io/react-auth/solana';
 import bs58 from 'bs58';
-import { PublicKey, SystemProgram, Transaction, type Connection as Conn } from '@solana/web3.js';
+import { PublicKey, Transaction, type Connection as Conn } from '@solana/web3.js';
 import {
   registerDocumentIx,
   attestSignatureIx,
@@ -21,7 +21,6 @@ import {
   bytesToHex,
   signatureAttestationPda,
   PROGRAM_ID,
-  TREASURY_PUBKEY,
   REGISTER_DOCUMENT_FEE_LAMPORTS,
   ATTEST_SIGNATURE_FEE_LAMPORTS,
 } from '@yoursign/solana-sdk';
@@ -234,18 +233,9 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
       let documentIdHex: string;
       const ixs = [];
 
-      // Treasury fee — UI-bundled transfer to the platform wallet. v1.1 will
-      // enforce this on-chain via an instructions-sysvar check inside the
-      // program so callers can't bypass by crafting the tx manually. Sum
-      // matches register_document (when relevant) + attest_signature.
-      const totalFeeLamports =
-        (mode === 'register' ? REGISTER_DOCUMENT_FEE_LAMPORTS : 0) +
-        ATTEST_SIGNATURE_FEE_LAMPORTS;
-      ixs.push(SystemProgram.transfer({
-        fromPubkey: active.pubkey,
-        toPubkey: TREASURY_PUBKEY,
-        lamports: totalFeeLamports,
-      }));
+      // Treasury fee is enforced on-chain by the program via CPI inside
+      // register_document and attest_signature. The handler transfers the fee
+      // automatically; we no longer need a sibling SystemProgram.transfer ix.
 
       if (mode === 'register') {
         documentId = newDocumentId();

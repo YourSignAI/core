@@ -3,7 +3,7 @@
 
 import { PublicKey, SystemProgram, TransactionInstruction } from '@solana/web3.js';
 import { sha256 } from '@noble/hashes/sha256';
-import { PROGRAM_ID } from './constants.js';
+import { PROGRAM_ID, TREASURY_PUBKEY } from './constants.js';
 import { documentPda, signatureAttestationPda } from './pda.js';
 
 function discriminator(method: string): Uint8Array {
@@ -57,6 +57,7 @@ export function registerDocumentIx(args: {
     keys: [
       { pubkey: registry, isSigner: false, isWritable: true },
       { pubkey: args.owner, isSigner: true, isWritable: true },
+      { pubkey: TREASURY_PUBKEY, isSigner: false, isWritable: true },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
     data: Buffer.from(data),
@@ -120,6 +121,7 @@ export function attestSignatureIx(args: {
       { pubkey: registry, isSigner: false, isWritable: true },
       { pubkey: attestation, isSigner: false, isWritable: true },
       { pubkey: args.signer, isSigner: true, isWritable: true },
+      { pubkey: TREASURY_PUBKEY, isSigner: false, isWritable: true },
       { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
     ],
     data: Buffer.from(data),

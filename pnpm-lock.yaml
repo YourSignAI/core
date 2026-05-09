@@ -32,6 +32,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@solana/web3.js':
+        specifier: ^1.95.0
+        version: 1.98.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       '@yoursign/agent-sdk':
         specifier: workspace:*
         version: link:../../packages/agent-sdk
@@ -44,6 +47,9 @@ importers:
       '@yoursign/schemas':
         specifier: workspace:*
         version: link:../../packages/schemas
+      bs58:
+        specifier: ^6.0.0
+        version: 6.0.0
       hono:
         specifier: ^4.6.0
         version: 4.12.18
@@ -62,7 +68,7 @@ importers:
         version: 2.1.9(@types/node@22.19.18)(lightningcss@1.32.0)(terser@5.47.1)
       wrangler:
         specifier: ^3.99.0
-        version: 3.114.17(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+        version: 3.114.17(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10)
 
   apps/mcp:
     dependencies:
@@ -14638,6 +14644,23 @@ snapshots:
 
   mimic-fn@2.1.0: {}
 
+  miniflare@3.20250718.3(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+    dependencies:
+      '@cspotcode/source-map-support': 0.8.1
+      acorn: 8.14.0
+      acorn-walk: 8.3.2
+      exit-hook: 2.2.1
+      glob-to-regexp: 0.4.1
+      stoppable: 1.1.0
+      undici: 5.29.0
+      workerd: 1.20250718.0
+      ws: 8.18.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      youch: 3.3.4
+      zod: 3.22.3
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   miniflare@3.20250718.3(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
@@ -16225,6 +16248,26 @@ snapshots:
       '@cloudflare/workerd-linux-64': 1.20260507.1
       '@cloudflare/workerd-linux-arm64': 1.20260507.1
       '@cloudflare/workerd-windows-64': 1.20260507.1
+
+  wrangler@3.114.17(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+    dependencies:
+      '@cloudflare/kv-asset-handler': 0.3.4
+      '@cloudflare/unenv-preset': 2.0.2(unenv@2.0.0-rc.14)(workerd@1.20250718.0)
+      '@esbuild-plugins/node-globals-polyfill': 0.2.3(esbuild@0.17.19)
+      '@esbuild-plugins/node-modules-polyfill': 0.2.2(esbuild@0.17.19)
+      blake3-wasm: 2.1.5
+      esbuild: 0.17.19
+      miniflare: 3.20250718.3(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+      path-to-regexp: 6.3.0
+      unenv: 2.0.0-rc.14
+      workerd: 1.20250718.0
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20260508.1
+      fsevents: 2.3.3
+      sharp: 0.33.5
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
 
   wrangler@3.114.17(@cloudflare/workers-types@4.20260508.1)(bufferutil@4.1.0)(utf-8-validate@6.0.6):
     dependencies:

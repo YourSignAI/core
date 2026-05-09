@@ -6,12 +6,23 @@ import { authRoutes } from './routes/auth.js';
 import { agentRoutes } from './routes/agents.js';
 import { docRoutes } from './routes/documents.js';
 
+const ALLOWED_ORIGINS = new Set([
+  'https://yoursign.tech',
+  'https://www.yoursign.tech',
+  'https://verify.yoursign.tech',
+  'https://yoursign-web.videostreaminginc.workers.dev',
+  'https://yoursign-verifier.videostreaminginc.workers.dev',
+  // local dev
+  'http://localhost:3000',
+  'http://localhost:3001',
+]);
+
 const app = new Hono<{ Bindings: Env }>();
 
 app.use(
   '*',
   cors({
-    origin: (origin) => origin ?? '*',
+    origin: (origin) => (origin && ALLOWED_ORIGINS.has(origin) ? origin : ''),
     credentials: true,
     allowHeaders: [
       'content-type',
@@ -19,8 +30,9 @@ app.use(
       'x-filename',
       'x-canonical-hash',
       'x-owner-b58',
+      'x-encryption',
     ],
-    exposeHeaders: ['content-disposition'],
+    exposeHeaders: ['content-disposition', 'x-encryption'],
     allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   }),
 );
