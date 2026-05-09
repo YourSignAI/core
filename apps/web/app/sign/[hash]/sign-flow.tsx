@@ -25,6 +25,7 @@ import {
   REGISTER_DOCUMENT_FEE_LAMPORTS,
   ATTEST_SIGNATURE_FEE_LAMPORTS,
 } from '@yoursign/solana-sdk';
+import { deriveConvergentDek, seal } from '@yoursign/crypto';
 
 type StashedFile = {
   filename: string;
@@ -299,23 +300,34 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
         'confirmed',
       );
 
-      // Owner-only: upload PDF blob (demo, plaintext) so /d/[id] can render.
+      // Owner-only: upload encrypted blob to R2 so /d/[id] can render.
+      // Convergent encryption (v0.1): AES-256-GCM key derived from the
+      // canonical hash. R2 stores ciphertext + IV only — server never sees
+      // plaintext. v1.1 will replace with per-recipient X25519 wraps so the
+      // canonical hash alone is no longer sufficient to decrypt.
       if (mode === 'register') {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://yoursign-api.videostreaminginc.workers.dev';
         if (stashed?.b64) {
           try {
             const bin = atob(stashed.b64);
-            const bytes = new Uint8Array(bin.length);
-            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            const plaintext = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) plaintext[i] = bin.charCodeAt(i);
+            const dek = deriveConvergentDek(hexToBytes(hashHex));
+            const sealed = seal(plaintext, dek);
+            // Frame: 12-byte IV || ciphertext (incl. 16-byte GCM tag)
+            const framed = new Uint8Array(sealed.iv.length + sealed.ciphertext.length);
+            framed.set(sealed.iv, 0);
+            framed.set(sealed.ciphertext, sealed.iv.length);
             await fetch(`${apiUrl}/documents/${documentIdHex}`, {
               method: 'PUT',
               headers: {
-                'content-type': 'application/pdf',
+                'content-type': 'application/octet-stream',
                 'x-filename': stashed.filename,
                 'x-canonical-hash': hashHex,
                 'x-owner-b58': active.pubkey.toBase58(),
+                'x-encryption': 'aes-256-gcm-convergent-v1',
               },
-              body: bytes,
+              body: framed,
             });
           } catch { /* upload best-effort; tx already on-chain */ }
         }

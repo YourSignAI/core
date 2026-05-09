@@ -5,7 +5,7 @@ export type { SigningMessageInput } from './signing-message.js';
 
 export { hash256, sign, verify } from './ed25519.js';
 
-export { generateDek, seal, open } from './aead.js';
+export { generateDek, seal, open, deriveConvergentDek } from './aead.js';
 export type { SealedDocument } from './aead.js';
 
 export { wrapDek, unwrapDek } from './wrap.js';

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Connection, PublicKey } from '@solana/web3.js';
 import bs58 from 'bs58';
 import { Wordmark } from '../../components/wordmark';
+import { PdfViewer } from './pdf-viewer';
 
 type Params = { id: string };
 type DocMeta = {
@@ -179,11 +180,11 @@ export default async function DocumentPage({ params }: { params: Promise<Params>
             overflow: 'hidden',
             minHeight: '70vh',
           }}>
-            {meta ? (
-              <embed
-                src={blobUrl}
-                type="application/pdf"
-                style={{ width: '100%', height: '70vh', display: 'block' }}
+            {canonicalHashFromChain ? (
+              <PdfViewer
+                documentId={id}
+                canonicalHashHex={canonicalHashFromChain}
+                filename={meta?.filename}
               />
             ) : (
               <div style={{ padding: 48, textAlign: 'center', color: 'var(--ash)' }}>
