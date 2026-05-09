@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "title": "YourSign Verifier",
+    "description": "Verify a YourSign signature on-chain. No server in the path."
+  },
+  "nav": {
+    "ariaHome": "Home",
+    "language": "Language",
+    "lightProtocol": "Light Protocol"
+  },
+  "page": {
+    "wordmark": "YourSign · verify",
+    "eyebrow": "Read-only · No backend in the path",
+    "h1": "Verify a YourSign signature on-chain.",
+    "subtitle": "Drop a signed PDF. The canonical hash is recomputed in your browser, and verification queries Solana via a public RPC — without going through our backend (AC-5.1.2).",
+    "footer": {
+      "left": "© 2026 YourSign Labs · Apache-2.0"
+    }
+  },
+  "form": {
+    "dropHeadline": "Drop a signed PDF here",
+    "dropSubline": "hash computed in your browser, on-chain via public RPC — no backend in the path",
+    "computing": "Computing canonical hash…",
+    "searching": "Looking up on-chain registry…",
+    "errorUnknown": "unknown failure",
+    "result": {
+      "bytes": "{count} bytes",
+      "sha256": "SHA-256",
+      "notFound": "✗ Hash not found in the devnet program. PDF was not anchored on-chain or bytes differ from the registered version.",
+      "found": "✓ Document found on-chain. Hash matches the on-chain record.",
+      "fields": {
+        "status": "Status",
+        "documentId": "Document ID",
+        "owner": "Owner",
+        "registryPda": "Registry PDA",
+        "createdAt": "Created at",
+        "signatures": "Signatures"
+      },
+      "actions": {
+        "explorer": "Solana Explorer →",
+        "openDocument": "Open document →"
+      }
+    }
+  }
+}
