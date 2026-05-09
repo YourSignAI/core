@@ -163,7 +163,9 @@
         "requiredSignersHint": "How many people must sign before the document is Completed. Each will open the same /sign URL with their own wallet.",
         "alreadySigned": "✓ This wallet already signed this document.",
         "signButton": "Sign document",
-        "shareSignerLink": "Send this link to other signers:"
+        "shareSignerLink": "Send this link to other signers:",
+        "feeLabel": "Platform fee:",
+        "feeSuffix": "transferred to the YourSign treasury in the same transaction. Plus the Solana network rent (~0.003 SOL) refunded with the account."
       },
       "errors": {
         "noWallet": "Connect a wallet first.",

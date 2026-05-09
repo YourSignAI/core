@@ -10,7 +10,7 @@ import {
   useSignAndSendTransaction,
 } from '@privy-io/react-auth/solana';
 import bs58 from 'bs58';
-import { PublicKey, Transaction, type Connection as Conn } from '@solana/web3.js';
+import { PublicKey, SystemProgram, Transaction, type Connection as Conn } from '@solana/web3.js';
 import {
   registerDocumentIx,
   attestSignatureIx,
@@ -21,6 +21,9 @@ import {
   bytesToHex,
   signatureAttestationPda,
   PROGRAM_ID,
+  TREASURY_PUBKEY,
+  REGISTER_DOCUMENT_FEE_LAMPORTS,
+  ATTEST_SIGNATURE_FEE_LAMPORTS,
 } from '@yoursign/solana-sdk';
 
 type StashedFile = {
@@ -230,6 +233,19 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
       let documentIdHex: string;
       const ixs = [];
 
+      // Treasury fee — UI-bundled transfer to the platform wallet. v1.1 will
+      // enforce this on-chain via an instructions-sysvar check inside the
+      // program so callers can't bypass by crafting the tx manually. Sum
+      // matches register_document (when relevant) + attest_signature.
+      const totalFeeLamports =
+        (mode === 'register' ? REGISTER_DOCUMENT_FEE_LAMPORTS : 0) +
+        ATTEST_SIGNATURE_FEE_LAMPORTS;
+      ixs.push(SystemProgram.transfer({
+        fromPubkey: active.pubkey,
+        toPubkey: TREASURY_PUBKEY,
+        lamports: totalFeeLamports,
+      }));
+
       if (mode === 'register') {
         documentId = newDocumentId();
         documentIdHex = bytesToHex(documentId);
@@ -315,7 +331,11 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
   }
 
   const isConnected = !!active;
-  const noFunds = balance !== null && balance < 0.003;
+  const noFunds = balance !== null && balance < 0.006;
+  const feeSol = (
+    (mode === 'register' ? REGISTER_DOCUMENT_FEE_LAMPORTS : 0) +
+    ATTEST_SIGNATURE_FEE_LAMPORTS
+  ) / 1_000_000_000;
   const numberLocale = locale === 'pt' ? 'pt-BR' : 'en-US';
   const canSubmit =
     isConnected && !noFunds && !alreadySigned && mode !== 'detecting' &&
@@ -444,6 +464,21 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
               fontSize: 13,
             }}>
               {t('multi.alreadySigned')}
+            </div>
+          ) : null}
+
+          {!alreadySigned && mode !== 'detecting' ? (
+            <div style={{
+              background: 'var(--cloud)',
+              border: '1px solid var(--hairline)',
+              borderRadius: 8,
+              padding: 10,
+              fontSize: 12,
+              color: 'var(--ash)',
+            }}>
+              {t('multi.feeLabel')}{' '}
+              <strong style={{ color: 'var(--ink)' }}>{feeSol.toFixed(4)} SOL</strong>{' '}
+              {t('multi.feeSuffix')}
             </div>
           ) : null}
 
