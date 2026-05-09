@@ -39,3 +39,4 @@ harness/runs/
 # tsbuildinfo
 *.tsbuildinfo
 
+.private/
