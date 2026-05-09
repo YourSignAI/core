@@ -76,6 +76,132 @@ This document follows the Symphony Harness pattern adapted for Claude Code with 
 
 ---
 
+## Pre-commit + pre-push verification
+
+**Mandatory checks before EVERY commit AND every push.** Failure on any
+check blocks the commit/push — fix the cause, never bypass with
+`--no-verify` unless explicitly authorized by the user for an unrelated
+hook failure (e.g., a slow lint).
+
+### Block-list — never commit these strings or files
+
+Patterns that, if matched in the staged diff, MUST abort the commit:
+
+- **Cloudflare account id** — any 32-hex string in a wrangler config near
+  `account_id`. The value lives in the `CLOUDFLARE_ACCOUNT_ID` env var
+  (already exported in the dev shell and set as a GitHub Actions secret);
+  wrangler reads it automatically when the field is omitted.
+- **Private keys** — `BEGIN .* PRIVATE KEY`, ed25519 secret bytes encoded
+  in base58 (>= 87 chars), `id.json`, `*-keypair.json`, `treasury-*.json`.
+- **Solana keypair JSON** — any file matching `[0-9,\s]{200,}` in `.json`
+  outside of `node_modules` is suspect (raw 64-byte secret arrays).
+- **API tokens** — Anthropic (`sk-ant-`), OpenAI (`sk-` then 48+ chars),
+  Helius (`hpub_`, full keys), QuickNode endpoints with embedded auth.
+- **Privy app secret** — different from the public app id; lives only in
+  `wrangler secret put` for `apps/api`.
+- **Mnemonics** — 12/24-word BIP39 phrases. If a comment looks like
+  English words separated by spaces with length 12 or 24, it dies here.
+- **Wallet addresses with private context** — the deployer pubkey
+  `2uNHhUNc2Rgv4CizVcfJzsdsi5WSXCyUTfKzvZfoDYif` is fine; references
+  to its keypair file (`~/.config/solana/id.json`) are not.
+- **Internal strategy docs** — anything under `.private/` (gitignored)
+  must not appear in `git diff --cached`. Refuse if it does.
+- **Customer data** — names, emails, document contents, signed NDAs.
+  These never go in the repo, ever.
+
+### Step-by-step pre-commit ritual
+
+Run these in order. Stop on the first failure.
+
+1. **Run gitleaks on the staged diff**:
+
+   ```sh
+   gitleaks protect --staged --redact --verbose
+   ```
+
+   Exit code != 0 ⇒ stop, surface the finding, do NOT amend, do NOT
+   `--no-verify`. Tell the user, fix the cause, restage.
+
+2. **Manual block-list grep** (gitleaks misses some shapes):
+
+   ```sh
+   # Use $CLOUDFLARE_ACCOUNT_ID at runtime; never paste the literal id here.
+   git diff --cached -U0 \
+     | grep -E "${CLOUDFLARE_ACCOUNT_ID:-NOPE_NOPE}|BEGIN .* PRIVATE KEY|sk-ant-|sk-[A-Za-z0-9]{40,}|hpub_[A-Za-z0-9]{32,}|^\+.*\"[A-Za-z0-9]{43,88}\\.json\"" \
+     && { echo "block-list match"; exit 1; } || true
+   ```
+
+3. **Filename check** — refuse if any of these are staged:
+
+   ```sh
+   git diff --cached --name-only | grep -E '\.(env|env\.local|env\.production)$|^\.private/|-keypair\.json$|treasury.*\.json$' \
+     && { echo "blocked file path"; exit 1; } || true
+   ```
+
+4. **Schema sanity** — wrangler configs must NOT have an `account_id`
+   field (we read it from env now):
+
+   ```sh
+   git diff --cached -- 'apps/**/wrangler.*' \
+     | grep -E '^\+.*account_id' \
+     && { echo "wrangler account_id leak"; exit 1; } || true
+   ```
+
+5. **Strategic-docs guard** — anything under `docs/05-sprints/`,
+   `docs/PRODUCT-FLOW.md`, `docs/04-roadmap.md`,
+   `docs/05-hackathon-strategy.md`, `docs/06-docuseal-reuse.md`, or
+   `docs/prds/*` is private-only. Block if staged:
+
+   ```sh
+   git diff --cached --name-only | grep -E '^docs/(05-sprints|prds|tasks)/|^docs/(PRODUCT-FLOW|04-roadmap|05-hackathon-strategy|06-docuseal-reuse)\.md$' \
+     && { echo "private strategy doc"; exit 1; } || true
+   ```
+
+6. **Conventional Commits + spec citation** — message MUST match
+   `^(feat|fix|chore|docs|refactor|test|perf|build|ci)\(([a-z0-9-]+)\): .+`
+   and, for code changes inside `apps/`, `packages/`, or `programs/`,
+   SHOULD reference `(spec:AC-X.Y.Z)` or an ADR id when reasonable.
+
+7. **No Claude / AI / Anthropic mentions** in messages:
+
+   ```sh
+   git log -1 --format=%B | grep -Ei 'claude|anthropic|generated with .*ai|co-authored-by: claude' \
+     && { echo "ai mention in message"; exit 1; } || true
+   ```
+
+   (This applies after the commit is drafted; the rule is enforced when
+   you compose the message in the first place.)
+
+### Pre-push extras
+
+In addition to the pre-commit ritual on the commits being pushed:
+
+- **Branch guard** — only push to `main` from a clean working tree, after
+  `pnpm typecheck` (and, when realistic, `pnpm test`) pass.
+- **Force push guard** — never `git push --force` without an explicit
+  user request that names the branch (`force push to feat/i18n-en-pt`).
+  Default to `--force-with-lease` even when authorized.
+- **Cross-fork push** — pushing to a fork (e.g., `dacio-veras/core`)
+  requires confirming `gh pr view N --json maintainerCanModify` is `true`.
+- **Tag guard** — never delete or move tags pointing at released
+  versions.
+- **History rewrite** — `git filter-branch` and `git rebase -i` against
+  `main` require an explicit user authorization for that scope. Always
+  confirm the resulting commit count before pushing.
+
+### After every commit/push
+
+- Re-fetch and check `git status` is clean.
+- For pushes to `main`, monitor CI (`gh run list -b main -L 1`) until it
+  goes green; surface failures to the user immediately.
+- For commits that touch the on-chain program or any file under
+  `programs/yoursign/**`, `apps/api/src/auth/**`, `apps/api/src/routes/payments/**`,
+  `packages/crypto/**`, `wrangler.toml`, `wrangler.jsonc`, or root
+  `package.json`, also remind the user that ADR + Security Analyst review
+  are still required (see "Hard escalations" below).
+
+---
+
 ## Agent Operating Loop
 
 For every Claude Code session inside this repo:
