@@ -24,31 +24,41 @@ docRoutes.put('/:id', async (c) => {
 
   const body = await c.req.arrayBuffer();
   if (body.byteLength === 0) return c.json({ error: 'empty body' }, 400);
-  if (body.byteLength > MAX_BYTES) return c.json({ error: 'PDF > 25 MB' }, 413);
+  if (body.byteLength > MAX_BYTES + 1024) return c.json({ error: 'PDF > 25 MB' }, 413);
 
-  // Verify the upload bytes hash to the claimed canonical_hash. Cheap integrity
-  // gate — a malicious uploader can't anchor different content under a hash
-  // already on-chain.
-  const digest = await crypto.subtle.digest('SHA-256', body);
-  const actualHash = Array.from(new Uint8Array(digest), (b) =>
-    b.toString(16).padStart(2, '0'),
-  ).join('');
-  if (actualHash !== expectedHash) {
-    return c.json(
-      { error: 'hash_mismatch', expected: expectedHash, actual: actualHash },
-      400,
-    );
+  const encryption = c.req.header('x-encryption') ?? '';
+
+  if (!encryption) {
+    // Plaintext upload (legacy): verify the body hashes to the claimed
+    // canonical_hash so a malicious uploader can't anchor different content
+    // under a hash already on-chain.
+    const digest = await crypto.subtle.digest('SHA-256', body);
+    const actualHash = Array.from(new Uint8Array(digest), (b) =>
+      b.toString(16).padStart(2, '0'),
+    ).join('');
+    if (actualHash !== expectedHash) {
+      return c.json(
+        { error: 'hash_mismatch', expected: expectedHash, actual: actualHash },
+        400,
+      );
+    }
   }
+  // Encrypted upload: hash gate runs client-side at decrypt time (GCM tag
+  // fails if the ciphertext does not match the DEK). Trust the upload here;
+  // the canonical_hash header is metadata only.
+
+  const contentType = encryption ? 'application/octet-stream' : 'application/pdf';
 
   // Idempotent: skip rewrite if already there.
   const existing = await c.env.DOCS.head(id);
   if (!existing) {
     await c.env.DOCS.put(id, body, {
-      httpMetadata: { contentType: 'application/pdf' },
+      httpMetadata: { contentType },
       customMetadata: {
         filename,
         canonicalHash: expectedHash,
         ownerB58,
+        encryption,
         uploadedAt: new Date().toISOString(),
       },
     });
@@ -68,12 +78,21 @@ docRoutes.get('/:id/blob', async (c) => {
   const obj = await c.env.DOCS.get(id);
   if (!obj) return c.json({ error: 'not_found' }, 404);
   const filename = obj.customMetadata?.filename ?? `${id}.pdf`;
+  const encryption = obj.customMetadata?.encryption ?? '';
+  // Strip CR/LF/quote/path-traversal from filename header to avoid response
+  // splitting and Content-Disposition smuggling.
+  const safeFilename = filename
+    .replace(/[\r\n]/g, '')
+    .replace(/"/g, '')
+    .replace(/[\\\/]/g, '_')
+    .slice(0, 200);
   return new Response(obj.body, {
     headers: {
-      'content-type': 'application/pdf',
-      'content-disposition': `inline; filename="${filename.replace(/"/g, '')}"`,
+      'content-type': encryption ? 'application/octet-stream' : 'application/pdf',
+      'content-disposition': `inline; filename="${safeFilename}"`,
       'cache-control': 'public, max-age=300, immutable',
       'access-control-allow-origin': '*',
+      'x-encryption': encryption,
     },
   });
 });
