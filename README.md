@@ -1,91 +1,127 @@
-# YourSign — `core`
+<div align="center">
+
+# YourSign
+
+**Decentralized document signing on Solana — multi-party, on-chain, with cryptographically scoped AI agent delegation.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Built on Solana](https://img.shields.io/badge/Built%20on-Solana-9945ff)](https://solana.com)
-[![Colosseum hackathon](https://img.shields.io/badge/Colosseum-hackathon-14f195)](https://arena.colosseum.org/hackathon)
-[![Spec-driven](https://img.shields.io/badge/SDD-spec--driven-555)](docs/01-spec.md)
+[![Anchor 0.30.1](https://img.shields.io/badge/Anchor-0.30.1-512da8)](https://anchor-lang.com)
+[![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-f38020)](https://workers.cloudflare.com)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16-000000)](https://nextjs.org)
+[![Colosseum hackathon](https://img.shields.io/badge/Colosseum-hackathon-14f195)](https://arena.colosseum.org/projects/explore/yoursign)
+[![devnet live](https://img.shields.io/badge/devnet-live-brightgreen)](https://yoursign.tech)
 
-> Decentralized document signing on Solana. PDFs encrypted client-side, signatures verified on-chain via ZK-compressed attestations, premium tiers paid in USDC. Built in the open for the [Colosseum hackathon](https://arena.colosseum.org/hackathon) by [@YourSignAI](https://github.com/YourSignAI).
+[**Live demo →**](https://yoursign.tech) · [**Public verifier →**](https://verify.yoursign.tech) · [**Vote on Colosseum →**](https://arena.colosseum.org/projects/explore/yoursign)
 
-`core` is the public monorepo. It contains **everything that ships**: web app, API, worker, public verifier, on-chain program, shared packages, and the **Symphony Harness** that orchestrates AI agents to build the rest.
+</div>
 
-**Org**: [github.com/YourSignAI](https://github.com/YourSignAI) · **Repo**: `YourSignAI/core` · **License**: Apache-2.0 · **Status**: Phase 0 — bootstrap.
+---
 
-## Why this exists
+## TL;DR
 
-Existing e-signature platforms (DocuSign, DocuSeal, Adobe Sign) are centralized. They:
+Drop a PDF, anchor its SHA-256 hash on Solana, invite signers via a shared link, watch the on-chain status flip from `Awaiting → Partial → Completed`. Each signature is its own on-chain account, cryptographically bound to the signer's keypair. AI agents can sign on your behalf with scope-bounded, revocable, on-chain delegations (ADR-0007).
 
-- Hold your document content on their servers (and your signatures with it).
-- Charge per-envelope fees once you scale past a free tier.
-- Tie legal validity to opaque, vendor-controlled audit trails.
-- Cannot prove a signature was *not* tampered with after the fact without trusting the vendor.
+No backend in the verification path. Sub-cent fees per signature.
 
-YourSign flips it:
+## What makes it different
 
-- **PDF content is encrypted client-side**, only signatories can decrypt.
-- **Signatures are cryptographic** — Ed25519 over a SHA-256 of the canonical document.
-- **Audit trail is on-chain** — ZK-compressed attestations on Solana, anchored to mainnet.
-- **Free for the user, sustainable for the platform** — base signing is gasless (off-chain message + compressed account); premium features (notarization, multi-party escrow, large-team workflows, ICP-Brasil bridge) settle in USDC via Solana Pay.
-- **Legally valid** under MP 2.200-2 (Brazil) and eIDAS (EU advanced electronic signature) by binding the on-chain attestation to identity proofs.
+| | DocuSign / Adobe Sign | DocuSeal | **YourSign** |
+|---|---|---|---|
+| Data custody | vendor servers | self-hosted server | **client-side, on-chain hash** |
+| Signature proof | vendor audit trail | DB row | **on-chain account, ed25519** |
+| Fee | $0.50 – $40/sig | infra cost | **~$0.001 SOL + flat USDC fee** |
+| AI agent signing | not supported | not supported | **scoped + revocable on-chain (ADR-0007)** |
+| Verification | vendor portal | self-hosted | **public RPC, no backend** |
+| Multi-party | yes | yes | **yes, each sig = on-chain account** |
+| Open source | no | yes (AGPL) | **yes (Apache-2.0)** |
 
-## Stack at a glance
+## Try it
 
-| Layer            | Choice                                                           |
-| ---------------- | ---------------------------------------------------------------- |
-| Frontend         | Next.js 16 App Router · shadcn/ui · TanStack Query · `pdf-lib`   |
-| Backend          | Fastify (Node 24) · Postgres (Neon) · BullMQ                     |
-| Worker           | Long-running Node process · canonicalization, OCR, anchoring     |
-| Wallets          | Phantom · Backpack · Solflare · Privy MPC (email/social)         |
-| On-chain         | Anchor program · Light Protocol ZK Compression · Solana Pay USDC |
-| L2 / scaling     | Light Protocol compressed accounts; MagicBlock ER for live co-sign sessions |
-| Storage          | Arweave/Irys for ciphertext blobs · S3 for hot cache             |
-| Encryption       | X25519 envelope keys · per-recipient AES-256-GCM payload key     |
-| Identity         | Solana pubkey + DIDs · optional ICP-Brasil bridge                |
+```text
+1. Open https://yoursign.tech
+2. Drop any PDF (≤25 MB)
+3. Pick required signers (1–10)
+4. Connect wallet (Phantom / Backpack / Privy email login)
+5. Click "Anchor hash on-chain" — owner self-signs in the same tx
+6. Copy /sign/<hash> URL → send to next signer
+7. Status flips to Completed once threshold met
+8. Verify any time at https://verify.yoursign.tech
+```
+
+## Architecture
+
+```mermaid
+flowchart LR
+  user[user / signer] -->|drop PDF| web[apps/web<br/>Next.js 16]
+  web -->|canonical SHA-256| pdfengine[packages/pdf-engine]
+  web -->|register_document<br/>+ attest_signature| program[programs/yoursign<br/>Anchor]
+  web -->|encrypted blob| api[apps/api<br/>Hono on CF Workers]
+  api -->|R2 bucket| r2[(Cloudflare R2)]
+  program -->|emit event| solana[(Solana devnet)]
+  agent[AI agent<br/>via MCP] -->|attest_agent_action<br/>scope-bounded| program
+  verifier[apps/verifier<br/>verify.yoursign.tech] -->|getProgramAccounts<br/>memcmp filter| solana
+  reader[recipient] -->|view + verify| verifier
+```
+
+## Stack
+
+| Layer | Choice |
+|---|---|
+| **On-chain** | Anchor 0.30.1 program · Solana devnet · `35Rb…M8X` |
+| **Web** | Next.js 16 App Router · `next-intl` (EN/PT) · Privy embedded wallets · Solana Wallet Adapter |
+| **API / blob** | Hono on Cloudflare Workers · R2 (object) · KV (sessions) |
+| **Verifier** | Next.js 16 read-only · queries Solana RPC directly · zero backend in path |
+| **MCP server** | `apps/mcp` exposes `delegate`, `sign_document`, `verify`, `revoke` tools |
+| **PDF** | `packages/pdf-engine` canonical SHA-256 + structural normalization |
+| **Crypto** | `packages/crypto` ed25519 / X25519 envelope (planned) |
+| **Build** | pnpm + turborepo · Node 24 LTS · TypeScript strict |
 
 ## Repo layout
 
 ```
 core/
 ├── apps/
-│   ├── web/         # Next.js — landing, editor, dashboard, sign flow
-│   ├── api/         # Fastify — REST/WS, auth, orchestration
-│   ├── worker/      # Background jobs — PDF canon, OCR, anchoring
-│   └── verifier/    # Public verification site (read-only)
+│   ├── web/        # /sign /agents /d/[id] flows + i18n EN/PT
+│   ├── verifier/   # verify.yoursign.tech read-only PDF check
+│   ├── api/        # Hono API + R2 blob endpoint
+│   ├── worker/     # queue consumer scaffold
+│   └── mcp/        # Model Context Protocol server for AI agents
 ├── packages/
-│   ├── core-domain/ # Submitter, Submission, Template, AuditEvent (TS port of DocuSeal)
-│   ├── pdf-engine/  # PDF parsing, field detection, embedding, canonicalization
-│   ├── solana-sdk/  # Typed Anchor client + helpers
-│   ├── crypto/      # Hash, envelope encryption, threshold helpers
-│   ├── ui/          # shadcn-based component library (extracted from prototype)
-│   ├── schemas/     # Zod schemas + shared DTOs
-│   └── config/      # Shared eslint, ts, prettier
+│   ├── solana-sdk/ # hand-encoded ix builders + PDA helpers
+│   ├── pdf-engine/ # canonical hash + field detection
+│   ├── crypto/     # ed25519 / X25519 envelope helpers
+│   ├── agent-sdk/  # canonical agent delegation messages
+│   ├── ui/         # shared components
+│   └── schemas/    # zod DTOs
 ├── programs/
-│   └── yoursign/   # Anchor program: attestations, USDC escrow, registry
-├── docs/            # Spec-driven development docs (see docs/README.md)
-└── harness/         # Symphony Harness — agent orchestration scaffolding
+│   └── yoursign/   # Anchor program — register_document, attest_signature
+└── docs/           # spec, ADRs, contracts, sequences
 ```
 
-## Spec-Driven Development
+## On-chain program
 
-This repo is built **spec-first**. No code lands without a falsifiable spec.
+| Instruction | Purpose |
+|---|---|
+| `register_document` | Anchors a doc — creates `DocumentRegistry` PDA `[b"doc", document_id]` |
+| `attest_signature` | Each signer attests once — creates `SignatureAttestation` PDA `[b"sig", document_id, signer]`, increments `completed_signers`, flips status to `Completed` when threshold met |
 
-- `docs/01-spec.md` — system spec (WHAT) with falsifiable acceptance criteria.
-- `docs/02-architecture.md` — component breakdown (HOW) with C4-style diagrams.
-- `docs/adr/` — architecture decision records for every reversible choice.
-- `docs/contracts/` — API, on-chain program, and event contracts (consumed by tests).
-- `docs/prds/` — product requirement documents per milestone.
-- `docs/tasks/` — task breakdowns ready for an executor (human or agent).
+Detailed contract: [`docs/contracts/on-chain-program.md`](docs/contracts/on-chain-program.md). Decision records under [`docs/adr/`](docs/adr/).
 
-Read `docs/README.md` for the full map.
+## Spec-driven
 
-## Symphony Harness
-
-We build YourSign the same way OpenAI builds research code: an **orchestrator agent** drives a fleet of specialist agents (researcher, planner, executor, verifier) against a shared spec. Every change passes through a verification loop before it lands. See `harness/README.md`.
+No code lands without a falsifiable spec. See [`docs/01-spec.md`](docs/01-spec.md) and the [ADR set](docs/adr/). Sequence diagrams in [`docs/sequences/`](docs/sequences/).
 
 ## Status
 
-Phase 0 — bootstrap. Spec and scaffolding only. No runtime code yet. Track milestones in `docs/04-roadmap.md`.
+Devnet live. Multi-party signing flow shipping at [yoursign.tech](https://yoursign.tech). Pre-mainnet deploy gated by 3-of-5 multisig handover (ADR-0002).
 
 ## License
 
-Apache-2.0. Public from day 1 — that's a Colosseum requirement and a feature, not a tax.
+Apache-2.0. Public from day 1 — Colosseum requirement and a feature, not a tax.
+
+## Links
+
+- Live: [yoursign.tech](https://yoursign.tech) · [verify.yoursign.tech](https://verify.yoursign.tech)
+- Colosseum: [arena.colosseum.org/projects/explore/yoursign](https://arena.colosseum.org/projects/explore/yoursign)
+- Solana program: [explorer.solana.com/address/35Rb…M8X?cluster=devnet](https://explorer.solana.com/address/35RbwNgx9Em28mMLZ6iWzjCnaTd4tD2NWuxrHqR76M8X?cluster=devnet)

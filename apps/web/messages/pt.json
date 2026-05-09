@@ -163,7 +163,9 @@
         "requiredSignersHint": "Quantas pessoas precisam assinar até o documento ficar Completed. Cada uma abre a mesma URL /sign com a wallet dela.",
         "alreadySigned": "✓ Essa wallet já assinou esse documento.",
         "signButton": "Assinar documento",
-        "shareSignerLink": "Manda esse link pros outros assinantes:"
+        "shareSignerLink": "Manda esse link pros outros assinantes:",
+        "feeLabel": "Taxa da plataforma:",
+        "feeSuffix": "transferidos pra treasury YourSign na mesma transação. Mais a rent da Solana (~0.003 SOL) que volta junto com o account."
       },
       "errors": {
         "noWallet": "Conecte uma carteira primeiro.",
