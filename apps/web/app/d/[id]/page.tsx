@@ -4,6 +4,11 @@ import bs58 from 'bs58';
 import { Wordmark } from '../../components/wordmark';
 import { PdfViewer } from './pdf-viewer';
 
+// Force dynamic rendering — Next.js 16 fetch is cached by default and would
+// pin a stale on-chain snapshot for the document page.
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 type Params = { id: string };
 type DocMeta = {
   documentId: string;
@@ -371,8 +376,9 @@ export default async function DocumentPage({ params }: { params: Promise<Params>
               padding: 12,
               fontSize: 12,
             }}>
-              <strong>Demo only:</strong> blob é plaintext em R2. Sprint 2 wireá X25519 envelope
-              encryption (AC-3.1.2) — só destinatários com chave Solana certa decifram.
+              <strong>Privacy v0.1:</strong> blob cifrado em R2 com AES-256-GCM (chave derivada do
+              hash canônico). Server cego ao plaintext. v1.1 ativa per-recipient X25519 wraps —
+              só wallets explicitamente listadas decifram.
             </div>
           </aside>
         </div>

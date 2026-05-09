@@ -308,17 +308,27 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
             const framed = new Uint8Array(sealed.iv.length + sealed.ciphertext.length);
             framed.set(sealed.iv, 0);
             framed.set(sealed.ciphertext, sealed.iv.length);
-            await fetch(`${apiUrl}/documents/${documentIdHex}`, {
-              method: 'PUT',
-              headers: {
-                'content-type': 'application/octet-stream',
-                'x-filename': stashed.filename,
-                'x-canonical-hash': hashHex,
-                'x-owner-b58': active.pubkey.toBase58(),
-                'x-encryption': 'aes-256-gcm-convergent-v1',
-              },
-              body: framed,
-            });
+            // Retry to absorb the RPC propagation lag between the tx confirm
+            // we observed and what api.devnet.solana.com sees from the API
+            // worker — the API gate rejects with 403 registry_not_found until
+            // the registry account is visible to its RPC node.
+            const maxAttempts = 6;
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+              const res = await fetch(`${apiUrl}/documents/${documentIdHex}`, {
+                method: 'PUT',
+                headers: {
+                  'content-type': 'application/octet-stream',
+                  'x-filename': stashed.filename,
+                  'x-canonical-hash': hashHex,
+                  'x-owner-b58': active.pubkey.toBase58(),
+                  'x-encryption': 'aes-256-gcm-convergent-v1',
+                },
+                body: framed,
+              });
+              if (res.ok) break;
+              if (res.status !== 403) break;
+              await new Promise((r) => setTimeout(r, 1500));
+            }
           } catch { /* upload best-effort; tx already on-chain */ }
         }
       }
