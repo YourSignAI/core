@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { usePrivy } from '@privy-io/react-auth';
+import { WalletButton } from '../../components/wallet-button';
 import {
   useWallets as useSolanaWallets,
   useSignAndSendTransaction,
@@ -400,7 +400,11 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
           <p style={{ marginTop: 0, fontSize: 15, color: 'var(--ink)' }}>
             {t('connectPrompt')}
           </p>
-          {!authenticated ? <WalletMultiButton /> : (
+          {!authenticated ? (
+            <div style={{ display: 'inline-flex', justifyContent: 'center' }}>
+              <WalletButton />
+            </div>
+          ) : (
             <p style={{ fontSize: 13, color: 'var(--ash)', margin: 0 }}>
               {t('privyInitializing')}
             </p>
