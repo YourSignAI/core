@@ -19,6 +19,8 @@ import {
   newDocumentId,
   hexToBytes,
   bytesToHex,
+  signatureAttestationPda,
+  PROGRAM_ID,
 } from '@yoursign/solana-sdk';
 
 type StashedFile = {
@@ -27,6 +29,16 @@ type StashedFile = {
   hashHex: string;
   ts: number;
   b64?: string;
+};
+
+type RegistrySnapshot = {
+  pda: PublicKey;
+  documentId: Uint8Array;
+  documentIdHex: string;
+  ownerB58: string;
+  status: number; // 0=Awaiting 1=Partial 2=Completed 3=Declined
+  requiredSigners: number;
+  completedSigners: number;
 };
 
 type Status =
@@ -42,12 +54,37 @@ const WORKSPACE_ID_HEX = '00000000000000000000000000000001';
 const PRIVY_CHAIN: 'solana:devnet' | 'solana:mainnet' | 'solana:testnet' =
   CLUSTER === 'mainnet-beta' ? 'solana:mainnet' :
   CLUSTER === 'testnet' ? 'solana:testnet' : 'solana:devnet';
+const STATUS_NAMES = ['Awaiting', 'Partial', 'Completed', 'Declined'];
 
 type ActiveWallet = {
   source: 'privy' | 'adapter';
   pubkey: PublicKey;
   send: (tx: Transaction, connection: Conn) => Promise<string>;
 };
+
+async function findRegistryByHash(
+  conn: Conn,
+  hashHex: string,
+): Promise<RegistrySnapshot | null> {
+  const hashBytes = hexToBytes(hashHex);
+  const accounts = await conn.getProgramAccounts(PROGRAM_ID, {
+    filters: [{ memcmp: { offset: 24, bytes: bs58.encode(hashBytes) } }],
+  });
+  if (accounts.length === 0) return null;
+  const { pubkey, account } = accounts[0]!;
+  const data = new Uint8Array(account.data);
+  const documentId = data.slice(8, 24);
+  const owner = new PublicKey(data.slice(56, 88));
+  return {
+    pda: pubkey,
+    documentId,
+    documentIdHex: bytesToHex(documentId),
+    ownerB58: owner.toBase58(),
+    status: data[112] ?? 0,
+    requiredSigners: data[113] ?? 0,
+    completedSigners: data[114] ?? 0,
+  };
+}
 
 export function SignFlow({ hashHex }: { hashHex: string }) {
   const t = useTranslations('sign.flow');
@@ -60,6 +97,9 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
   const [stashed, setStashed] = useState<StashedFile | null>(null);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [balance, setBalance] = useState<number | null>(null);
+  const [registry, setRegistry] = useState<RegistrySnapshot | null | undefined>(undefined);
+  const [requiredSigners, setRequiredSigners] = useState<number>(1);
+  const [alreadySigned, setAlreadySigned] = useState<boolean>(false);
 
   const active: ActiveWallet | null = useMemo(() => {
     if (privyWallets[0]) {
@@ -100,6 +140,37 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
     }
   }, [hashHex]);
 
+  // Detect on-chain registry mode (register vs attest).
+  useEffect(() => {
+    let cancelled = false;
+    setRegistry(undefined);
+    (async () => {
+      try {
+        const snap = await findRegistryByHash(connection, hashHex);
+        if (!cancelled) setRegistry(snap);
+      } catch {
+        if (!cancelled) setRegistry(null);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [connection, hashHex, status.kind]);
+
+  // Detect if active wallet has already attested this registry.
+  useEffect(() => {
+    if (!active || !registry) { setAlreadySigned(false); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const [sigPda] = signatureAttestationPda(registry.documentId, active.pubkey);
+        const info = await connection.getAccountInfo(sigPda);
+        if (!cancelled) setAlreadySigned(info !== null);
+      } catch {
+        if (!cancelled) setAlreadySigned(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [active, registry, connection]);
+
   useEffect(() => {
     if (!active) { setBalance(null); return; }
     let cancelled = false;
@@ -118,32 +189,41 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
     return `https://explorer.solana.com/tx/${status.signature}${cluster}`;
   }, [status]);
 
-  async function onAnchor() {
+  const mode: 'register' | 'attest' | 'detecting' =
+    registry === undefined ? 'detecting' : registry === null ? 'register' : 'attest';
+
+  async function onSubmit() {
     if (!active) {
       setStatus({ kind: 'error', reason: t('errors.noWallet') });
       return;
     }
     try {
       setStatus({ kind: 'building' });
-      const documentId = newDocumentId();
-      const canonicalHash = hexToBytes(hashHex);
-      const workspaceId = hexToBytes(WORKSPACE_ID_HEX);
 
-      const registerIx = registerDocumentIx({
-        owner: active.pubkey,
-        documentId,
-        canonicalHash,
-        workspaceId,
-        requiredSigners: 1,
-      });
+      let documentId: Uint8Array;
+      let documentIdHex: string;
+      const ixs = [];
 
-      // Self-sign: chain attest_signature in same tx so owner anchoring +
-      // signing yields 1/1 Completed instead of 0/1 Awaiting. Per spec
-      // AC-4.1.1, the attestation message binds document_id + canonical hash
-      // + signer + timestamp; sha256 of that message goes on-chain. The tx
-      // signature itself binds the action to the signer's keypair (devnet
-      // demo). Multi-party flows in v1.1 add ed25519 sibling-ix verification.
-      const documentIdHex = bytesToHex(documentId);
+      if (mode === 'register') {
+        documentId = newDocumentId();
+        documentIdHex = bytesToHex(documentId);
+        const canonicalHash = hexToBytes(hashHex);
+        const workspaceId = hexToBytes(WORKSPACE_ID_HEX);
+        ixs.push(registerDocumentIx({
+          owner: active.pubkey,
+          documentId,
+          canonicalHash,
+          workspaceId,
+          requiredSigners,
+        }));
+      } else if (mode === 'attest' && registry) {
+        documentId = registry.documentId;
+        documentIdHex = registry.documentIdHex;
+      } else {
+        setStatus({ kind: 'error', reason: 'still detecting on-chain state…' });
+        return;
+      }
+
       const timestampIso = new Date().toISOString();
       const signingMsg = canonicalSigningMessage({
         documentIdHex,
@@ -154,20 +234,17 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
       const messageHash = new Uint8Array(
         await crypto.subtle.digest('SHA-256', new TextEncoder().encode(signingMsg)),
       );
-      // Self-sign devnet demo: zero-bytes ed25519 sig (the tx signature on
-      // `signer` is what binds the attestation cryptographically). Multi-
-      // party signers in v1.1 will provide a real ed25519 sig over messageHash.
       const zeroSig = new Uint8Array(64);
 
-      const attestIx = attestSignatureIx({
+      ixs.push(attestSignatureIx({
         signer: active.pubkey,
         documentId,
         signature: zeroSig,
         messageHash,
         kind: AttestationKind.Sign,
-      });
+      }));
 
-      const tx = new Transaction().add(registerIx, attestIx);
+      const tx = new Transaction().add(...ixs);
       tx.feePayer = active.pubkey;
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
       tx.recentBlockhash = blockhash;
@@ -180,24 +257,26 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
         'confirmed',
       );
 
-      // Upload PDF blob (demo, plaintext) so /d/[id] can render for any reader.
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://yoursign-api.videostreaminginc.workers.dev';
-      if (stashed?.b64) {
-        try {
-          const bin = atob(stashed.b64);
-          const bytes = new Uint8Array(bin.length);
-          for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-          await fetch(`${apiUrl}/documents/${documentIdHex}`, {
-            method: 'PUT',
-            headers: {
-              'content-type': 'application/pdf',
-              'x-filename': stashed.filename,
-              'x-canonical-hash': hashHex,
-              'x-owner-b58': active.pubkey.toBase58(),
-            },
-            body: bytes,
-          });
-        } catch { /* upload best-effort; tx already on-chain */ }
+      // Owner-only: upload PDF blob (demo, plaintext) so /d/[id] can render.
+      if (mode === 'register') {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://yoursign-api.videostreaminginc.workers.dev';
+        if (stashed?.b64) {
+          try {
+            const bin = atob(stashed.b64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            await fetch(`${apiUrl}/documents/${documentIdHex}`, {
+              method: 'PUT',
+              headers: {
+                'content-type': 'application/pdf',
+                'x-filename': stashed.filename,
+                'x-canonical-hash': hashHex,
+                'x-owner-b58': active.pubkey.toBase58(),
+              },
+              body: bytes,
+            });
+          } catch { /* upload best-effort; tx already on-chain */ }
+        }
       }
 
       setStatus({ kind: 'done', signature, documentIdHex });
@@ -212,6 +291,11 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
   const isConnected = !!active;
   const noFunds = balance !== null && balance < 0.003;
   const numberLocale = locale === 'pt' ? 'pt-BR' : 'en-US';
+  const canSubmit =
+    isConnected && !noFunds && !alreadySigned && mode !== 'detecting' &&
+    status.kind !== 'building' && status.kind !== 'awaiting-wallet' &&
+    status.kind !== 'confirming' && status.kind !== 'done' &&
+    !(mode === 'attest' && registry && (registry.status === 2 || registry.status === 3));
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
@@ -233,6 +317,36 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
             color: 'var(--ink)', wordBreak: 'break-all',
           }}>{hashHex}</code>
         </div>
+
+        {mode === 'detecting' ? (
+          <div style={{ marginTop: 16, fontSize: 12, color: 'var(--ash)' }}>
+            {t('multi.detecting')}
+          </div>
+        ) : null}
+
+        {mode === 'attest' && registry ? (
+          <div style={{
+            marginTop: 16, padding: 12,
+            background: registry.status === 2 ? '#eaffe7' :
+                        registry.status === 3 ? '#fff5f5' : '#eef4ff',
+            border: `1px solid ${registry.status === 2 ? '#a7e8a7' :
+                                  registry.status === 3 ? '#f5c6c6' : '#c5d4f5'}`,
+            borderRadius: 8, fontSize: 13,
+            color: registry.status === 2 ? '#1d6b1d' :
+                   registry.status === 3 ? '#8a2222' : '#1d3d6b',
+          }}>
+            <div style={{ fontWeight: 600, marginBottom: 6 }}>
+              {t('multi.statusPrefix')} {STATUS_NAMES[registry.status] ?? '?'} —{' '}
+              {registry.completedSigners} / {registry.requiredSigners}
+            </div>
+            <div style={{ fontSize: 12 }}>
+              {t('multi.ownerLabel')}{' '}
+              <code style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
+                {registry.ownerB58.slice(0, 8)}…{registry.ownerB58.slice(-4)}
+              </code>
+            </div>
+          </div>
+        ) : null}
       </article>
 
       {!isConnected ? (
@@ -265,6 +379,48 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
             </div>
           </div>
 
+          {mode === 'register' ? (
+            <div>
+              <label className="eyebrow" htmlFor="required-signers" style={{ display: 'block', marginBottom: 6 }}>
+                {t('multi.requiredSignersLabel')}
+              </label>
+              <input
+                id="required-signers"
+                type="number"
+                min={1}
+                max={10}
+                value={requiredSigners}
+                onChange={(e) => {
+                  const n = parseInt(e.target.value, 10);
+                  if (!Number.isNaN(n) && n >= 1 && n <= 10) setRequiredSigners(n);
+                }}
+                disabled={status.kind !== 'idle' && status.kind !== 'error'}
+                style={{
+                  width: 80, padding: '6px 10px',
+                  border: '1px solid var(--hairline)', borderRadius: 6,
+                  fontFamily: 'var(--font-mono)', fontSize: 14,
+                  background: 'var(--canvas)', color: 'var(--ink)',
+                }}
+              />
+              <p style={{ fontSize: 12, color: 'var(--ash)', margin: '6px 0 0' }}>
+                {t('multi.requiredSignersHint')}
+              </p>
+            </div>
+          ) : null}
+
+          {alreadySigned ? (
+            <div style={{
+              background: '#eaffe7',
+              border: '1px solid #a7e8a7',
+              color: '#1d6b1d',
+              borderRadius: 8,
+              padding: 12,
+              fontSize: 13,
+            }}>
+              {t('multi.alreadySigned')}
+            </div>
+          ) : null}
+
           {noFunds ? (
             <div style={{
               background: '#fffbe9',
@@ -289,22 +445,16 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
 
           <button
             type="button"
-            disabled={
-              status.kind === 'building' ||
-              status.kind === 'awaiting-wallet' ||
-              status.kind === 'confirming' ||
-              status.kind === 'done' ||
-              noFunds
-            }
-            onClick={onAnchor}
+            disabled={!canSubmit}
+            onClick={onSubmit}
             className="btn btn-primary btn-lg"
           >
-            {status.kind === 'idle' ? t('button.idle') :
-             status.kind === 'building' ? t('button.building') :
+            {status.kind === 'building' ? t('button.building') :
              status.kind === 'awaiting-wallet' ? t('button.awaitingWallet') :
              status.kind === 'confirming' ? t('button.confirming') :
              status.kind === 'done' ? t('button.done') :
-             t('button.retry')}
+             mode === 'attest' ? t('multi.signButton') :
+             t('button.idle')}
           </button>
 
           {status.kind === 'error' ? (
@@ -346,9 +496,9 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
               </div>
               {status.kind === 'done' ? (
                 <div style={{ marginTop: 10, fontSize: 12, color: 'var(--ash)' }}>
-                  {t('share')}{' '}
+                  {t('multi.shareSignerLink')}{' '}
                   <code style={{ color: 'var(--ink)' }}>
-                    {typeof window !== 'undefined' ? `${window.location.origin}/d/${status.documentIdHex}` : `/d/${status.documentIdHex}`}
+                    {typeof window !== 'undefined' ? `${window.location.origin}/sign/${hashHex}` : `/sign/${hashHex}`}
                   </code>
                 </div>
               ) : null}
