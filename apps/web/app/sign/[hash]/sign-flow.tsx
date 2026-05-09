@@ -12,6 +12,9 @@ import bs58 from 'bs58';
 import { PublicKey, Transaction, type Connection as Conn } from '@solana/web3.js';
 import {
   registerDocumentIx,
+  attestSignatureIx,
+  AttestationKind,
+  canonicalSigningMessage,
   newDocumentId,
   hexToBytes,
   bytesToHex,
@@ -123,14 +126,45 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
       const canonicalHash = hexToBytes(hashHex);
       const workspaceId = hexToBytes(WORKSPACE_ID_HEX);
 
-      const ix = registerDocumentIx({
+      const registerIx = registerDocumentIx({
         owner: active.pubkey,
         documentId,
         canonicalHash,
         workspaceId,
         requiredSigners: 1,
       });
-      const tx = new Transaction().add(ix);
+
+      // Self-sign: chain attest_signature in same tx so owner anchoring +
+      // signing yields 1/1 Completed instead of 0/1 Awaiting. Per spec
+      // AC-4.1.1, the attestation message binds document_id + canonical hash
+      // + signer + timestamp; sha256 of that message goes on-chain. The tx
+      // signature itself binds the action to the signer's keypair (devnet
+      // demo). Multi-party flows in v1.1 add ed25519 sibling-ix verification.
+      const documentIdHex = bytesToHex(documentId);
+      const timestampIso = new Date().toISOString();
+      const signingMsg = canonicalSigningMessage({
+        documentIdHex,
+        canonicalHashHex: hashHex,
+        signerB58: active.pubkey.toBase58(),
+        timestampIso,
+      });
+      const messageHash = new Uint8Array(
+        await crypto.subtle.digest('SHA-256', new TextEncoder().encode(signingMsg)),
+      );
+      // Self-sign devnet demo: zero-bytes ed25519 sig (the tx signature on
+      // `signer` is what binds the attestation cryptographically). Multi-
+      // party signers in v1.1 will provide a real ed25519 sig over messageHash.
+      const zeroSig = new Uint8Array(64);
+
+      const attestIx = attestSignatureIx({
+        signer: active.pubkey,
+        documentId,
+        signature: zeroSig,
+        messageHash,
+        kind: AttestationKind.Sign,
+      });
+
+      const tx = new Transaction().add(registerIx, attestIx);
       tx.feePayer = active.pubkey;
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
       tx.recentBlockhash = blockhash;
@@ -142,7 +176,6 @@ export function SignFlow({ hashHex }: { hashHex: string }) {
         { signature, blockhash, lastValidBlockHeight },
         'confirmed',
       );
-      const documentIdHex = bytesToHex(documentId);
 
       // Upload PDF blob (demo, plaintext) so /d/[id] can render for any reader.
       const apiUrl = process.env.NEXT_PUBLIC_API_URL ?? 'https://yoursign-api.videostreaminginc.workers.dev';
