@@ -1,0 +1,102 @@
+# YourSign git hooks. Mirrors the rules in CLAUDE.md "Pre-commit + pre-push
+# verification". Installed automatically via `pnpm install` (postinstall).
+#
+# To skip a check (rare, dangerous): `LEFTHOOK_EXCLUDE=<job-name> git commit ...`
+# To bypass everything (banned by policy): `LEFTHOOK=0 git commit ...`
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: gitleaks
+      run: |
+        if command -v gitleaks > /dev/null 2>&1; then
+          gitleaks protect --staged --redact --verbose
+        else
+          echo "WARN: gitleaks not installed — install via 'brew install gitleaks'" >&2
+          exit 0
+        fi
+
+    - name: blocklist-secrets
+      run: |
+        ACCT_PATTERN="${CLOUDFLARE_ACCOUNT_ID:-IMPOSSIBLE_NEVER_MATCHES_XXX}"
+        if git diff --cached -U0 \
+          | grep -qE "${ACCT_PATTERN}|-----BEGIN [A-Z ]+PRIVATE KEY-----|sk-ant-[A-Za-z0-9_-]{40,}|hpub_[A-Za-z0-9]{40,}|sk_live_[A-Za-z0-9]{20,}|sk_test_[A-Za-z0-9]{20,}"; then
+          echo "BLOCK: secret pattern in staged diff" >&2
+          exit 1
+        fi
+
+    - name: filename-guard
+      run: |
+        if git diff --cached --name-only \
+          | grep -qE '\.(env|env\.local|env\.production)$|^\.private/|-keypair\.json$|treasury.*\.json$'; then
+          echo "BLOCK: blocked file path staged" >&2
+          exit 1
+        fi
+
+    - name: wrangler-account-id
+      run: |
+        if git diff --cached -- 'apps/**/wrangler.*' 2>/dev/null \
+          | grep -qE '^\+.*account_id'; then
+          echo "BLOCK: wrangler account_id leak — value belongs in CLOUDFLARE_ACCOUNT_ID env" >&2
+          exit 1
+        fi
+
+    - name: strategic-docs
+      run: |
+        if git diff --cached --name-only \
+          | grep -qE '^docs/(05-sprints|prds|tasks)/|^docs/(PRODUCT-FLOW|04-roadmap|05-hackathon-strategy|06-docuseal-reuse)\.md$'; then
+          echo "BLOCK: private strategy doc staged — keep these under .private/" >&2
+          exit 1
+        fi
+
+    - name: solana-keypair-array
+      run: |
+        for f in $(git diff --cached --name-only | grep '\.json$' | grep -v node_modules); do
+          if [ -f "$f" ] && grep -qE '\[[ \t]*[0-9]+[ \t]*,([ \t]*[0-9]+[ \t]*,){60,}' "$f"; then
+            echo "BLOCK: $f looks like a Solana keypair byte array" >&2
+            exit 1
+          fi
+        done
+
+commit-msg:
+  jobs:
+    - name: conventional-commits
+      run: |
+        first_line=$(head -n1 {1})
+        if ! echo "$first_line" \
+          | grep -qE '^(feat|fix|chore|docs|refactor|test|perf|build|ci|merge)(\([a-z0-9._/-]+\))?: .+'; then
+          echo "BLOCK: commit message must start with a conventional type" >&2
+          echo "  expected: feat(scope): subject" >&2
+          echo "  got     : $first_line" >&2
+          exit 1
+        fi
+
+    - name: no-ai-mentions
+      run: |
+        if grep -Ei 'co-authored-by: claude|anthropic|generated with .*claude code|🤖' {1} > /dev/null 2>&1; then
+          echo "BLOCK: commit message must not mention Claude / AI / Anthropic" >&2
+          exit 1
+        fi
+
+pre-push:
+  jobs:
+    - name: typecheck
+      run: pnpm -w typecheck
+
+    - name: branch-guard
+      run: |
+        # Block direct push from a dirty tree.
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "BLOCK: working tree is dirty — commit or stash before pushing" >&2
+          exit 1
+        fi
+
+    - name: force-push-guard
+      run: |
+        # Refuse `git push --force` to main (use --force-with-lease only on feature branches).
+        if [ -n "$LEFTHOOK_QUOTED_ARGS" ] \
+          && echo "$LEFTHOOK_QUOTED_ARGS" | grep -E -- '--force([^[:alnum:]_-]|$)' > /dev/null \
+          && git rev-parse --abbrev-ref HEAD | grep -qE '^(main|master)$'; then
+          echo "BLOCK: refusing --force on main; use --force-with-lease on a feature branch" >&2
+          exit 1
+        fi

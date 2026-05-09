@@ -30,12 +30,14 @@
     "smoke": "bash scripts/smoke-test.sh",
     "setup:solana": "bash scripts/setup-solana.sh",
     "deploy:devnet": "bash scripts/deploy-devnet.sh",
-    "init:tool-manifest": "tsx scripts/init-tool-manifest.ts"
+    "init:tool-manifest": "tsx scripts/init-tool-manifest.ts",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
     "@coral-xyz/anchor": "^0.30.1",
     "@solana/web3.js": "^1.95.0",
     "@types/node": "^22.10.0",
+    "lefthook": "^2.1.6",
     "prettier": "^3.4.0",
     "tsx": "^4.19.0",
     "turbo": "^2.3.0",
