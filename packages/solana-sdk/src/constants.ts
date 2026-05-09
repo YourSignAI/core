@@ -13,3 +13,4 @@ export const TOOL_MANIFEST_SEED = Buffer.from('tool-manifest');
 export const DELEGATION_SEED = Buffer.from('delegation');
 export const ACTION_SEED = Buffer.from('action');
 export const DOC_SEED = Buffer.from('doc');
+export const SIG_SEED = Buffer.from('sig');
