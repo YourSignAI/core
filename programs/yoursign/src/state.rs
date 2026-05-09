@@ -27,71 +27,22 @@ pub enum DocumentStatus {
 }
 
 #[account]
-pub struct AgentDelegation {
-    pub delegation_id: [u8; 16],
-    pub principal: Pubkey,
-    pub agent: Pubkey,
-    pub scope_hash: [u8; 32],
-    pub expires_at: i64,
-    pub nonce: [u8; 32],
-    pub principal_sig: [u8; 64],
-    pub status: DelegationStatus,
-    pub created_at: i64,
-    pub revoked_at: Option<i64>,
-}
-
-impl AgentDelegation {
-    // disc 8 + 16 + 32 + 32 + 32 + 8 + 32 + 64 + 1 + 8 + (1+8)
-    pub const SIZE: usize = 8 + 16 + 32 + 32 + 32 + 8 + 32 + 64 + 1 + 8 + 1 + 8 + 32;
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum DelegationStatus {
-    Active,
-    Revoked,
-    Expired,
-}
-
-#[account]
-pub struct AgentAction {
-    pub action_id: [u8; 16],
-    pub delegation_id: [u8; 16],
-    pub action_kind: ToolId,
-    pub target_id: [u8; 32],
-    pub agent_sig: [u8; 64],
-    pub principal_sig_witness: Option<[u8; 64]>,
+pub struct SignatureAttestation {
+    pub document_id: [u8; 16],
+    pub signer: Pubkey,
+    pub signature: [u8; 64],
+    pub message_hash: [u8; 32],
     pub timestamp: i64,
-    pub slot: u64,
+    pub kind: AttestationKind,
 }
 
-impl AgentAction {
-    pub const SIZE: usize = 8 + 16 + 16 + 1 + 32 + 64 + 1 + 64 + 8 + 8 + 32;
-}
-
-#[account]
-pub struct ToolManifest {
-    pub authority: Pubkey,
-    pub version: u8,
-    pub tools: Vec<ToolEntry>,
-    pub bump: u8,
-}
-
-impl ToolManifest {
-    // headroom for ≤ 16 tool entries
-    pub const SIZE: usize = 8 + 32 + 1 + 4 + (16 * 33) + 1 + 64;
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct ToolEntry {
-    pub id: ToolId,
-    pub max_spend_micro_usdc: u64,
-    pub enabled: bool,
+impl SignatureAttestation {
+    pub const SIZE: usize = 8 + 16 + 32 + 64 + 32 + 8 + 1 + 16;
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum ToolId {
-    Delegate,
-    SignDocument,
-    Verify,
-    Revoke,
+pub enum AttestationKind {
+    Sign,
+    Decline,
+    NotaryCounterSign,
 }
